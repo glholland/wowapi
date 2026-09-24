@@ -1,0 +1,104 @@
+# https://taskfile.dev
+version: '3'
+
+# Credentials and defaults live in .env (copy .env.example). Real environment
+# variables take precedence over the file.
+dotenv: ['.env']
+
+vars:
+  BIN: wowapi{{exeExt}}
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+    silent: true
+
+  setup:
+    desc: Create .env from the example and download Go modules
+    cmds:
+      - task: env
+      - go mod download
+
+  env:
+    internal: true
+    cmds:
+      - cp .env.example .env
+      - echo "Created .env - fill in BLIZZARD_CLIENT_ID and BLIZZARD_CLIENT_SECRET"
+    status:
+      - test -f .env
+
+  build:
+    desc: Build the wowapi binary
+    sources: ['**/*.go', go.mod, go.sum]
+    generates: ['{{.BIN}}']
+    cmds:
+      - go build -o {{.BIN}} .
+
+  install:
+    desc: Install wowapi into your Go bin directory
+    cmds:
+      - go install .
+
+  test:
+    desc: Run the tests
+    cmds:
+      - go test ./...
+
+  check:
+    desc: Format check, vet and test (run before committing)
+    cmds:
+      - task: fmt:check
+      - go vet ./...
+      - task: test
+
+  fmt:
+    desc: Format the code
+    cmds:
+      - gofmt -w .
+
+  fmt:check:
+    desc: Fail if any file needs gofmt
+    cmds:
+      - 'test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)'
+
+  run:
+    desc: 'Run a CLI command, e.g. task run -- character -section equipment'
+    deps: [build]
+    cmds:
+      - ./{{.BIN}} {{.CLI_ARGS}}
+
+  character:
+    desc: 'Show a character (defaults to WOW_REALM/WOW_CHARACTER), e.g. task character -- -section stats'
+    deps: [build]
+    cmds:
+      - ./{{.BIN}} character {{.CLI_ARGS}}
+
+  price:
+    desc: 'Auction House commodity price, e.g. task price -- 240158'
+    deps: [build]
+    cmds:
+      - ./{{.BIN}} price {{.CLI_ARGS}}
+
+  mcp:add:
+    desc: Register the built binary as a user-scoped MCP server in Claude Code (reads .env)
+    deps: [build]
+    preconditions:
+      - sh: '[ -n "$BLIZZARD_CLIENT_ID" ] && [ -n "$BLIZZARD_CLIENT_SECRET" ]'
+        msg: Set BLIZZARD_CLIENT_ID and BLIZZARD_CLIENT_SECRET in .env first (task setup)
+    cmds:
+      - >-
+        claude mcp add wowapi --scope user
+        -e "BLIZZARD_CLIENT_ID=$BLIZZARD_CLIENT_ID"
+        -e "BLIZZARD_CLIENT_SECRET=$BLIZZARD_CLIENT_SECRET"
+        -e "WOW_REGION=${WOW_REGION:-us}"
+        -e "WOW_REALM=$WOW_REALM"
+        -e "WOW_CHARACTER=$WOW_CHARACTER"
+        -- "{{.ROOT_DIR}}/{{.BIN}}" mcp
+
+  clean:
+    desc: Remove build output
+    cmds:
+      - go clean
+      - rm -f {{.BIN}}

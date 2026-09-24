@@ -1,0 +1,17 @@
+# Build output
+/wowapi
+/wowapi.exe
+/wowapi.exe~
+/dist/
+
+# Local secrets
+.env
+
+# Task cache
+.task/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
