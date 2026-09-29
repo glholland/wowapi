@@ -113,6 +113,9 @@ Use Task rather than raw `go` commands:
   `.goreleaser.yaml` pick up; keep those paths in step. npm publishing stays
   outside GoReleaser (its npm support is Pro-only and uses a postinstall
   download instead of per-platform packages).
+- npm platform packages are scoped (`@gholland/wowapi-<os>-<cpu>`); only the
+  launcher `wowapi` is unscoped. Several unscoped look-alike names published
+  quickly by a new account trip npm's spam detection.
 - npm publishing uses trusted publishing (OIDC), not a token. npm checks the
   *calling* workflow's filename, so each package trusts both
   `release-please.yml` and `release.yml`, and both need `id-token: write`.
