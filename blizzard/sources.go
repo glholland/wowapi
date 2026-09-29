@@ -18,14 +18,20 @@ import (
 // but not vendors, trainers, quests or specialization unlocks.
 type RecipeSource struct {
 	// Type is one of: boss_drop, tradable_item, bind_on_pickup_item, no_item.
-	Type          string     `json:"type"`
-	Summary       string     `json:"summary"`
-	TaughtBy      *RecipeRef `json:"taught_by,omitempty"`
-	RequiresSkill string     `json:"requires_skill,omitempty"`
-	DroppedBy     []string   `json:"dropped_by,omitempty"` // "Boss (Instance)"
-	Tradable      bool       `json:"tradable,omitempty"`
-	AHListings    int        `json:"ah_listings,omitempty"`
-	AHMinBuyout   string     `json:"ah_min_buyout,omitempty"`
+	Type          string   `json:"type"`
+	Summary       string   `json:"summary"`
+	TaughtBy      *ItemRef `json:"taught_by,omitempty"`
+	RequiresSkill string   `json:"requires_skill,omitempty"`
+	DroppedBy     []string `json:"dropped_by,omitempty"` // "Boss (Instance)"
+	Tradable      bool     `json:"tradable,omitempty"`
+	AHListings    int      `json:"ah_listings,omitempty"`
+	AHMinBuyout   string   `json:"ah_min_buyout,omitempty"`
+}
+
+// ItemRef is an item's ID and name (e.g. the pattern that teaches a recipe).
+type ItemRef struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 // recipeItemSubclass maps a profession ID to the Recipe item class (9)
@@ -431,7 +437,7 @@ func (c *Client) recipeSources(ctx context.Context, realm string, professionID i
 	for _, j := range jobs {
 		d := details[j.item.ID]
 		src := &RecipeSource{
-			TaughtBy:      &RecipeRef{ID: j.item.ID, Name: j.item.Name},
+			TaughtBy:      &ItemRef{ID: j.item.ID, Name: j.item.Name},
 			RequiresSkill: strings.TrimPrefix(d.Skill, "Requires "),
 			DroppedBy:     drops[j.item.ID],
 			Tradable:      tradable(d.Binding),

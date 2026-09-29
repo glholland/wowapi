@@ -7,6 +7,15 @@ dotenv: ['.env']
 
 vars:
   BIN: wowapi{{exeExt}}
+  # Version stamped into builds: the nearest git tag, else the commit.
+  VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || echo dev
+  LDFLAGS: -s -w -X main.version={{.VERSION}}
+  RELEASE_TARGETS: windows/amd64 windows/arm64 linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
+  # Dev tools run via `go run`, so nothing needs installing first.
+  STATICCHECK: honnef.co/go/tools/cmd/staticcheck@latest
+  GOVULNCHECK: golang.org/x/vuln/cmd/govulncheck@latest
+  INSPECTOR: '@modelcontextprotocol/inspector'
 
 tasks:
   default:
@@ -14,6 +23,8 @@ tasks:
     cmds:
       - task --list
     silent: true
+
+  # ---- Setup ---------------------------------------------------------------
 
   setup:
     desc: Create .env from the example and download Go modules
@@ -29,17 +40,57 @@ tasks:
     status:
       - test -f .env
 
+  # ---- Build ---------------------------------------------------------------
+
   build:
-    desc: Build the wowapi binary
+    desc: Build the wowapi binary for this machine
     sources: ['**/*.go', go.mod, go.sum]
     generates: ['{{.BIN}}']
     cmds:
-      - go build -o {{.BIN}} .
+      - go build -ldflags "-X main.version={{.VERSION}}" -o {{.BIN}} .
 
   install:
     desc: Install wowapi into your Go bin directory
     cmds:
-      - go install .
+      - go install -ldflags "-X main.version={{.VERSION}}" .
+
+  release:
+    desc: Cross-compile stripped binaries for every platform into dist/
+    cmds:
+      - rm -rf dist
+      - for: {var: RELEASE_TARGETS, split: ' '}
+        task: release:target
+        vars: {TARGET: '{{.ITEM}}'}
+      - cmd: ls -l dist
+        platforms: [linux, darwin]
+
+  release:target:
+    internal: true
+    vars:
+      GOOS: '{{index (splitList "/" .TARGET) 0}}'
+      GOARCH: '{{index (splitList "/" .TARGET) 1}}'
+      EXT: '{{if eq .GOOS "windows"}}.exe{{end}}'
+    env:
+      GOOS: '{{.GOOS}}'
+      GOARCH: '{{.GOARCH}}'
+      CGO_ENABLED: '0'
+    cmds:
+      - go build -trimpath -ldflags "{{.LDFLAGS}}" -o dist/wowapi-{{.VERSION}}-{{.GOOS}}-{{.GOARCH}}{{.EXT}} .
+
+  version:
+    desc: Show the version builds will be stamped with, and the built binary's
+    cmds:
+      - echo "source {{.VERSION}}"
+      - cmd: ./{{.BIN}} version
+        ignore_error: true
+
+  clean:
+    desc: Remove build output, release artifacts and coverage files
+    cmds:
+      - go clean
+      - rm -rf {{.BIN}} dist coverage.out .task
+
+  # ---- Quality ---------------------------------------------------------------
 
   test:
     desc: Run the tests
@@ -63,6 +114,51 @@ tasks:
     cmds:
       - 'test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)'
 
+  lint:
+    desc: Run staticcheck (downloaded on first use)
+    cmds:
+      - go run {{.STATICCHECK}} ./...
+
+  vuln:
+    desc: Check dependencies and code for known vulnerabilities (govulncheck)
+    cmds:
+      - go run {{.GOVULNCHECK}} ./...
+
+  cover:
+    desc: Run tests with coverage and print per-function results
+    cmds:
+      - go test -coverprofile=coverage.out ./...
+      - go tool cover -func=coverage.out
+
+  ci:
+    desc: Everything CI should run - check, lint, vulnerability scan, release build
+    cmds:
+      - task: check
+      - task: lint
+      - task: vuln
+      - task: release
+
+  # ---- Dependencies ----------------------------------------------------------
+
+  tidy:
+    desc: Add missing and remove unused module requirements
+    cmds:
+      - go mod tidy
+
+  deps:outdated:
+    desc: List modules with newer versions available (shown in [brackets])
+    cmds:
+      - go list -u -m all
+
+  deps:update:
+    desc: Update all dependencies to their latest minor/patch versions, then re-check
+    cmds:
+      - go get -u ./...
+      - go mod tidy
+      - task: check
+
+  # ---- Running ---------------------------------------------------------------
+
   run:
     desc: 'Run a CLI command, e.g. task run -- character -section equipment'
     deps: [build]
@@ -81,6 +177,23 @@ tasks:
     cmds:
       - ./{{.BIN}} price {{.CLI_ARGS}}
 
+  # ---- MCP -------------------------------------------------------------------
+
+  mcp:list:
+    desc: List the MCP server's tools, resources and prompts (no credentials needed)
+    deps: [build]
+    cmds:
+      - ./{{.BIN}} mcp -list
+
+  mcp:inspect:
+    desc: Open the MCP Inspector web UI against the built server (needs Node.js; reads .env)
+    deps: [build]
+    preconditions:
+      - sh: command -v npx
+        msg: The MCP Inspector needs Node.js (npx). Install it from https://nodejs.org
+    cmds:
+      - npx -y {{.INSPECTOR}} "{{.ROOT_DIR}}/{{.BIN}}" mcp
+
   mcp:add:
     desc: Register the built binary as a user-scoped MCP server in Claude Code (reads .env)
     deps: [build]
@@ -96,9 +209,3 @@ tasks:
         -e "WOW_REALM=$WOW_REALM"
         -e "WOW_CHARACTER=$WOW_CHARACTER"
         -- "{{.ROOT_DIR}}/{{.BIN}}" mcp
-
-  clean:
-    desc: Remove build output
-    cmds:
-      - go clean
-      - rm -f {{.BIN}}

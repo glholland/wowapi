@@ -3,6 +3,7 @@
 /wowapi.exe
 /wowapi.exe~
 /dist/
+coverage.out
 
 # Local secrets
 .env

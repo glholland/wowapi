@@ -8,14 +8,20 @@ are in [README.md](README.md).
 `wowapi` is a single Go binary with two front ends over the same client:
 
 - a CLI (`main.go`) for querying Blizzard's World of Warcraft API, and
-- an MCP server over stdio (`mcp.go`, `wowapi mcp`) exposing read-only tools.
+- an MCP server over stdio (`mcpserver/`, run with `wowapi mcp`) exposing
+  read-only tools, resources and prompts.
 
 ## Layout
 
 | Path | Purpose |
 |---|---|
-| `main.go` | CLI entry point, argument parsing, usage text, `version` constant |
-| `mcp.go` | MCP tool definitions (`wow_*`) using `github.com/modelcontextprotocol/go-sdk` |
+| `main.go` | CLI entry point, argument parsing, usage text, `version` (set by `-ldflags` in builds) |
+| `mcpserver/server.go` | `New` / `Run`: builds the MCP server (official `github.com/modelcontextprotocol/go-sdk`) |
+| `mcpserver/tools.go` | Tool definitions (`wow_*`), input types and structured output types |
+| `mcpserver/resources.go` | `wow://` resources and resource templates |
+| `mcpserver/prompts.go` | Prompts (`new_character`, `character_review`, `profession_plan`) |
+| `mcpserver/describe.go` | `wowapi mcp -list`: lists the server through an in-memory MCP client |
+| `mcpserver/server_test.go` | Protocol-level tests via in-memory transports and a fake API |
 | `blizzard/client.go` | OAuth client-credentials flow, HTTP, response cache |
 | `blizzard/wow.go` | Endpoint helpers (character, item, search, profession, recipe, commodities), `Slim`, `RealmSlug`, `FormatGold` |
 | `blizzard/progress.go` | Condensed character progress: dungeon/raid encounters, Mythic+ seasons, known vs. missing recipes |
@@ -31,6 +37,8 @@ Use Task rather than raw `go` commands:
 - `task build` — build the binary
 - `task test` — run tests
 - `task check` — gofmt check + `go vet` + tests. **Run this before finishing any change.**
+- `task lint` / `task vuln` — staticcheck and govulncheck (`task ci` runs everything)
+- `task mcp:list` — confirm the MCP server starts and lists what you expect
 - `task fmt` — format
 - `task run -- <args>` — run the CLI (needs credentials in `.env`)
 
@@ -42,13 +50,19 @@ Use Task rather than raw `go` commands:
   Blizzard or Battle.net endpoint.
 - Keep the CLI and MCP surfaces in step: a new capability usually needs a
   `blizzard` method, a CLI subcommand (plus `usage` text in `main.go`), an
-  MCP tool in `mcp.go`, and a line in the README.
+  MCP tool in `mcpserver/tools.go` (and a resource if it's reference data),
+  and a line in the README.
+- MCP tools that return condensed Go types are **typed**: use a concrete `Out`
+  type in `mcp.AddTool` so the SDK publishes an `outputSchema` and fills
+  `structuredContent`. Wrap lists in an object (`RaceList{Races: ...}`). Tools
+  that pass Blizzard's raw JSON through return text via `rawResult`.
 - MCP tool descriptions and `jsonschema` tags are read by models — keep them
   specific (IDs, defaults, examples).
 - API responses go through `blizzard.Slim` to drop `_links`/`href` noise
   unless the user asks for `-raw`.
-- New `blizzard` behavior gets a test in `blizzard_test.go` using the existing
-  `fakeAPI` helper. Tests must never hit the real API.
+- New `blizzard` behavior gets a test using the existing `fakeAPI` helper; new
+  MCP behavior gets a test in `mcpserver/server_test.go`. Tests must never hit
+  the real API.
 
 ## Secrets
 
@@ -74,4 +88,9 @@ Use Task rather than raw `go` commands:
   Some choice nodes come back without options; they are flagged, not dropped.
 - The CLI shares one flag set: don't define a flag name twice (it panics at
   startup, and `go vet` won't catch it).
+- Output schemas are generated from Go types and must not be recursive (a
+  type can't contain itself, even through a pointer); the server panics at
+  startup otherwise. `task mcp:list` or the tests catch it.
+- The SDK validates structured output against its schema on every call, and
+  does not enforce required prompt arguments; prompts check them by hand.
 - In Git Bash, `MSYS_NO_PATHCONV=1` is needed for `wowapi get /data/wow/...`.

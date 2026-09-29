@@ -317,7 +317,7 @@ func (c *Client) MythicKeystoneSeason(ctx context.Context, realm, name string, s
 			out.SeasonName, out.Started, out.Ended = s.Name, formatMillis(s.Start), formatMillis(s.End)
 		}
 	} else if isNotFound(err) {
-		return MythicSeason{}, fmt.Errorf("Mythic+ season %d does not exist", seasonID)
+		return MythicSeason{}, fmt.Errorf("no Mythic+ season %d", seasonID)
 	}
 	if current {
 		out.ThisWeek = condenseRuns(prof.CurrentPeriod.BestRuns)

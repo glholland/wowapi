@@ -15,9 +15,11 @@ import (
 	"strings"
 
 	"github.com/glholland/wowapi/blizzard"
+	"github.com/glholland/wowapi/mcpserver"
 )
 
-const version = "0.4.0"
+// version is overridden at release build time with -ldflags "-X main.version=...".
+var version = "0.5.0"
 
 const usage = `wowapi - World of Warcraft Battle.net API client and MCP server
 
@@ -40,7 +42,8 @@ Usage:
   wowapi price <item id>                         Auction House commodity price
   wowapi get <static|dynamic|profile> <path> [key=value ...]
                                                  any API endpoint
-  wowapi mcp                                     run as an MCP server on stdio
+  wowapi mcp [-list]                             run as an MCP server on stdio (-list: print its tools,
+                                                 resources and prompts, then exit; no credentials needed)
   wowapi version
 
 Flags for data commands:
@@ -83,17 +86,22 @@ func run() error {
 	season := fs.Int("season", 0, "mythic: season ID (0 = current)")
 	tier := fs.Int("tier", 0, "recipes: skill tier ID (0 = newest the character has)")
 	known := fs.Bool("known", false, "recipes: also list known recipes")
+	list := fs.Bool("list", false, "mcp: print tools, resources and prompts, then exit")
 	sources := fs.Bool("sources", false, "recipes: explain where each missing recipe comes from")
 	hero := fs.String("hero", "", "talents: only hero trees whose name contains this")
 	fs.Parse(args)
 	args = fs.Args()
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	if cmd == "mcp" && *list {
+		// Listing never calls the API, so it works without credentials.
+		return mcpserver.Describe(ctx, mcpserver.New(blizzard.New("", "", "us", "en_US"), version), os.Stdout)
+	}
 	c, err := blizzard.NewFromEnv()
 	if err != nil {
 		return err
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer stop()
 
 	print := func(body []byte, err error) error {
 		if err != nil {
@@ -121,7 +129,7 @@ func run() error {
 
 	switch cmd {
 	case "mcp":
-		return runMCP(ctx, c)
+		return mcpserver.Run(ctx, c, version)
 	case "character":
 		realm, name := resolveCharacter(args)
 		return print(c.Character(ctx, realm, name, *section))

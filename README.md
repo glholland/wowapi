@@ -105,32 +105,81 @@ claude mcp add wowapi --scope user ^
   -- C:\path\to\wowapi.exe mcp
 ```
 
-Tools (all read-only):
+The server is built on the official [MCP Go SDK](https://github.com/modelcontextprotocol/go-sdk).
+Run `task mcp:list` to print everything it exposes (no credentials needed), or
+`task mcp:inspect` to explore it in the MCP Inspector web UI (needs Node.js).
 
-| Tool | What it answers |
+### Tools
+
+All tools are read-only and annotated as such. **Structured** tools publish an
+`outputSchema` and return typed `structuredContent` alongside the text, so
+clients and models can rely on field names and types. The others pass
+Blizzard's JSON through as text, since its shape varies by endpoint.
+
+| Tool | Output | What it answers |
+|---|---|---|
+| `wow_character` | text | Any profile section: summary, equipment, stats, professions, reputations, achievements, ... |
+| `wow_character_encounters` | structured | Dungeon or raid progress per difficulty; filter by expansion for boss kills |
+| `wow_mythic_plus` | structured | Mythic+ rating and best runs for a season, plus this week's runs |
+| `wow_profession_recipes` | structured | Recipes a character knows vs. is missing in a profession tier; with `sources`, where to get each one |
+| `wow_races` | structured | Playable races: factions, allied race, classes, racial abilities |
+| `wow_classes` | structured | Classes and specs: role, primary stat, description, hero trees, PvP talents |
+| `wow_talents` | structured | A spec's class, spec, hero and PvP talents with descriptions and choice options |
+| `wow_item_search` | structured | Find items by name |
+| `wow_item` | text | Item details |
+| `wow_profession`, `wow_recipe` | text | Profession tiers and recipe lists; a recipe's reagents |
+| `wow_commodity_price` | structured | Region-wide Auction House price for stackable goods |
+| `wow_api_get` | text | Any other `/data/wow/` or `/profile/wow/` endpoint |
+
+### Resources
+
+For clients that attach context directly. Names in URIs are percent-encoded
+(`wow://character/Area%2052/C%C3%ABldis`).
+
+| URI | Contents |
 |---|---|
-| `wow_character` | Any profile section: summary, equipment, stats, professions, reputations, achievements, ... |
-| `wow_character_encounters` | Dungeon or raid progress per difficulty; filter by expansion for boss kills |
-| `wow_mythic_plus` | Mythic+ rating and best runs for a season, plus this week's runs |
-| `wow_profession_recipes` | Recipes a character knows vs. is missing in a profession tier; with `sources`, where to get each one |
-| `wow_races` | Playable races: factions, allied race, classes, racial abilities |
-| `wow_classes` | Classes and specs: role, primary stat, description, hero trees, PvP talents |
-| `wow_talents` | A spec's class, spec, hero and PvP talents with descriptions and choice options |
-| `wow_item_search`, `wow_item` | Find items by name; item details |
-| `wow_profession`, `wow_recipe` | Profession tiers and recipe lists; a recipe's reagents |
-| `wow_commodity_price` | Region-wide Auction House price for stackable goods |
-| `wow_api_get` | Any other `/data/wow/` or `/profile/wow/` endpoint |
+| `wow://races`, `wow://race/{race}` | All races, or one with racial abilities described |
+| `wow://classes`, `wow://class/{class}` | All classes and specs, or one class in detail |
+| `wow://talents/{class}/{spec}` | A spec's full talent tree |
+| `wow://character/{realm}/{name}` | A character's profile summary |
+| `wow://character/{realm}/{name}/{section}` | One profile section, e.g. `equipment` |
+
+### Prompts
+
+Ready-made starting points that tell the model which tools to use:
+
+| Prompt | Arguments | Purpose |
+|---|---|---|
+| `new_character` | goal, faction, preferences | Recommend a race, class, spec, hero tree and first talents |
+| `character_review` | realm, name | Review gear, progress and professions; suggest next steps |
+| `profession_plan` | profession (required), realm, name | Level a profession and collect missing recipes, with AH prices |
 
 ## Development
 
 | Task | What it does |
 |---|---|
-| `task build` | Build `wowapi` / `wowapi.exe` |
-| `task test` | Run the tests |
-| `task check` | gofmt check, `go vet`, tests — run before committing |
-| `task fmt` | Format the code |
+| `task build` | Build `wowapi` / `wowapi.exe`, stamped with the git version |
+| `task release` | Cross-compile stripped binaries for Windows, Linux and macOS (amd64 + arm64) into `dist/` |
+| `task version` | Show the version builds will carry and the built binary's |
 | `task install` | `go install` into your Go bin directory |
-| `task clean` | Remove build output |
+| `task test` | Run the tests (no network or credentials needed) |
+| `task check` | gofmt check, `go vet`, tests — run before committing |
+| `task lint` | staticcheck |
+| `task vuln` | govulncheck: known vulnerabilities in code and dependencies |
+| `task cover` | Tests with per-function coverage |
+| `task ci` | check + lint + vuln + release, in one go |
+| `task fmt` | Format the code |
+| `task tidy` | `go mod tidy` |
+| `task deps:outdated` | List dependencies with newer versions |
+| `task deps:update` | Update dependencies, then re-run `check` |
+| `task mcp:list` | Print the MCP server's tools, resources and prompts |
+| `task mcp:inspect` | Open the MCP Inspector against the built server |
+| `task mcp:add` | Register the server with Claude Code using `.env` |
+| `task clean` | Remove build output, `dist/` and coverage files |
+
+Linting and vulnerability tools run through `go run`, so there is nothing
+extra to install. Builds are versioned from `git describe`, so tag releases
+(`git tag v0.5.0`) to get clean version numbers.
 
 See [AGENTS.md](AGENTS.md) for notes aimed at AI coding assistants.
 
