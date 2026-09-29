@@ -114,6 +114,14 @@ func fakeAPI(t *testing.T) (*Client, *int32) {
 			w.Write([]byte(`{"connected_realm":{"href":"https://us.api.blizzard.com/data/wow/connected-realm/3694?namespace=dynamic-us"}}`))
 		case r.URL.Path == "/data/wow/connected-realm/3694/auctions" && ns == "dynamic-us":
 			w.Write([]byte(`{"auctions":[{"item":{"id":9001},"buyout":5000000},{"item":{"id":9001},"buyout":3000000},{"item":{"id":42},"buyout":1}]}`))
+		case strings.HasPrefix(r.URL.Path, "/data/wow/playable-") || r.URL.Path == "/data/wow/spell/20598" ||
+			r.URL.Path == "/data/wow/talent-tree/658/playable-specialization/62":
+			body, ok := creationData[r.URL.Path]
+			if !ok || ns != "static-us" {
+				http.NotFound(w, r)
+				return
+			}
+			w.Write([]byte(body))
 		case r.URL.Path == "/data/wow/search/item" && ns == "static-us":
 			if r.URL.Query().Get("name.en_US") != "cloth" {
 				http.Error(w, "bad query", http.StatusBadRequest)

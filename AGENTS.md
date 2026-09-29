@@ -20,6 +20,7 @@ are in [README.md](README.md).
 | `blizzard/wow.go` | Endpoint helpers (character, item, search, profession, recipe, commodities), `Slim`, `RealmSlug`, `FormatGold` |
 | `blizzard/progress.go` | Condensed character progress: dungeon/raid encounters, Mythic+ seasons, known vs. missing recipes |
 | `blizzard/sources.go` | Recipe sources: journal loot tables, recipe-item index, realm Auction House index |
+| `blizzard/creation.go` | Character creation data: races, classes, specializations, talent trees |
 | `blizzard/*_test.go` | Tests against an `httptest` fake API — no network or credentials needed |
 | `Taskfile.yml` | All common commands ([taskfile.dev](https://taskfile.dev)) |
 
@@ -66,4 +67,11 @@ Use Task rather than raw `go` commands:
 - Recipe names repeat across expansions ("Arcanoweave Bracers" is in Outland
   and Midnight Tailoring). Match teaching items by the skill tier they require,
   not by name alone.
+- Races have one record per faction (Dracthyr, Earthen, Haranir) and Pandaren
+  has unselectable faction copies; merge by name and keep `is_selectable`.
+  Race records also list placeholder classes absent from the class index.
+- Talent trees list every hero tree of the class; keep only the spec's own.
+  Some choice nodes come back without options; they are flagged, not dropped.
+- The CLI shares one flag set: don't define a flag name twice (it panics at
+  startup, and `go vet` won't catch it).
 - In Git Bash, `MSYS_NO_PATHCONV=1` is needed for `wowapi get /data/wow/...`.

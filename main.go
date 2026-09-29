@@ -17,7 +17,7 @@ import (
 	"github.com/glholland/wowapi/blizzard"
 )
 
-const version = "0.3.0"
+const version = "0.4.0"
 
 const usage = `wowapi - World of Warcraft Battle.net API client and MCP server
 
@@ -29,6 +29,10 @@ Usage:
   wowapi recipes [-tier N] [-known] [-sources] <profession> [realm] [name]
                                                  known vs. missing recipes for a profession tier;
                                                  -sources adds boss drops, recipe items and AH prices
+  wowapi races [race]                            playable races (one race: racial abilities described)
+  wowapi classes [class]                         classes and specs (one class: spec details, hero trees, races)
+  wowapi talents [-section S] [-hero H] [class] <spec>
+                                                 a spec's talent tree (section: class, spec, hero, pvp)
   wowapi search <item name>                      find item IDs by name
   wowapi item <id>                               item details
   wowapi profession [id [skill-tier-id]]         professions, skill tiers, recipes
@@ -73,13 +77,14 @@ func run() error {
 
 	fs := flag.NewFlagSet(cmd, flag.ExitOnError)
 	raw := fs.Bool("raw", false, "print the unmodified API response")
-	section := fs.String("section", "summary", "character section: "+strings.Join(blizzard.SectionNames(), ", "))
+	section := fs.String("section", "summary", "character section: "+strings.Join(blizzard.SectionNames(), ", ")+"; talents: class, spec, hero or pvp")
 	kind := fs.String("kind", "dungeons", "encounters: dungeons or raids")
 	expansion := fs.String("expansion", "", "encounters: only expansions whose name contains this (adds boss detail)")
 	season := fs.Int("season", 0, "mythic: season ID (0 = current)")
 	tier := fs.Int("tier", 0, "recipes: skill tier ID (0 = newest the character has)")
 	known := fs.Bool("known", false, "recipes: also list known recipes")
 	sources := fs.Bool("sources", false, "recipes: explain where each missing recipe comes from")
+	hero := fs.String("hero", "", "talents: only hero trees whose name contains this")
 	fs.Parse(args)
 	args = fs.Args()
 
@@ -132,6 +137,20 @@ func run() error {
 		}
 		realm, name := resolveCharacter(args[1:])
 		return printJSON(c.ProfessionRecipes(ctx, realm, name, args[0], blizzard.RecipeOptions{TierID: *tier, IncludeKnown: *known, Sources: *sources}))
+	case "races":
+		return printJSON(c.Races(ctx, strings.Join(args, " ")))
+	case "classes":
+		return printJSON(c.Classes(ctx, strings.Join(args, " ")))
+	case "talents":
+		if len(args) == 0 {
+			return fmt.Errorf("usage: wowapi talents [-section S] [-hero H] [class] <spec>")
+		}
+		class, spec := strings.Join(args[:len(args)-1], " "), args[len(args)-1]
+		part := *section
+		if part == "summary" { // the flag's default for character; means "all" here
+			part = ""
+		}
+		return printJSON(c.Talents(ctx, class, spec, part, *hero))
 	case "search":
 		if len(args) == 0 {
 			return fmt.Errorf("usage: wowapi search <item name>")

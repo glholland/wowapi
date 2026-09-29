@@ -40,6 +40,17 @@ type recipeProgressArgs struct {
 	Sources      bool   `json:"sources,omitempty" jsonschema:"Explain where each missing recipe comes from: boss drops (dungeon/raid loot tables), the item that teaches it, whether that item is tradable, and its price on the character's realm Auction House. The first call per expansion takes a few seconds."`
 }
 
+type nameArgs struct {
+	Name string `json:"name,omitempty" jsonschema:"Optional. Omit to list all; give one name for full detail."`
+}
+
+type talentArgs struct {
+	Class          string `json:"class,omitempty" jsonschema:"Class name, e.g. 'Mage' or 'Death Knight'. Needed when the spec name is shared (Frost, Holy, Restoration, Protection)."`
+	Specialization string `json:"specialization" jsonschema:"Specialization name (e.g. 'Arcane') or ID (e.g. 62)."`
+	Section        string `json:"section,omitempty" jsonschema:"Limit to one part: class, spec, hero or pvp. Omit for everything (large: ~100 talents)."`
+	HeroTree       string `json:"hero_tree,omitempty" jsonschema:"Only hero trees whose name contains this, e.g. 'Sunfury'."`
+}
+
 type itemSearchArgs struct {
 	Name  string `json:"name" jsonschema:"Text the item name contains, e.g. 'Arcanoweave'."`
 	Limit int    `json:"limit,omitempty" jsonschema:"Max results (1-100, default 25)."`
@@ -106,6 +117,30 @@ func runMCP(ctx context.Context, c *blizzard.Client) error {
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, a recipeProgressArgs) (*mcp.CallToolResult, any, error) {
 		realm, name := firstNonEmpty(a.Realm, os.Getenv("WOW_REALM")), firstNonEmpty(a.Name, os.Getenv("WOW_CHARACTER"))
 		return jsonResult(c.ProfessionRecipes(ctx, realm, name, a.Profession, blizzard.RecipeOptions{TierID: a.SkillTierID, IncludeKnown: a.IncludeKnown, Sources: a.Sources}))
+	})
+
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "wow_races",
+		Description: "Playable races for character creation: factions (Alliance/Horde/Neutral), whether it is an allied race (requires unlocking), the classes it can play, and racial abilities. Give a race name to get each racial ability's description.",
+		Annotations: readOnly,
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, a nameArgs) (*mcp.CallToolResult, any, error) {
+		return jsonResult(c.Races(ctx, a.Name))
+	})
+
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "wow_classes",
+		Description: "Playable classes and their specializations with role (tank/healer/damage) and primary stat. Give a class name for spec descriptions, hero talent trees, PvP talents, resources and which races can play it. Use wow_talents for a spec's full talent tree.",
+		Annotations: readOnly,
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, a nameArgs) (*mcp.CallToolResult, any, error) {
+		return jsonResult(c.Classes(ctx, a.Name))
+	})
+
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "wow_talents",
+		Description: "A specialization's talent tree: class talents, spec talents, its hero talent trees and PvP talents, each with description, cast/cooldown/cost, max rank, choice-node options, prerequisites and point gates. Use section and hero_tree to keep responses small. Tooltip numbers are base values, not scaled to a character.",
+		Annotations: readOnly,
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, a talentArgs) (*mcp.CallToolResult, any, error) {
+		return jsonResult(c.Talents(ctx, a.Class, a.Specialization, a.Section, a.HeroTree))
 	})
 
 	mcp.AddTool(s, &mcp.Tool{

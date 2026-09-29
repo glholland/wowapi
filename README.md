@@ -76,6 +76,13 @@ wowapi encounters                                  # dungeon progress, every exp
 wowapi encounters -kind raids -expansion midnight  # raid bosses, kill counts and dates
 wowapi mythic                                      # Mythic+ rating and best runs, current season
 wowapi mythic -season 17
+wowapi races                                       # races: factions, allied, classes, racials
+wowapi races Haranir                               # one race, racial abilities described
+wowapi classes                                     # classes and specs with role and primary stat
+wowapi classes Evoker                              # spec descriptions, hero trees, PvP talents, races
+wowapi talents -section spec Arcane                # a spec's talents (class, spec, hero or pvp)
+wowapi talents -section hero -hero sunfury Mage Arcane
+wowapi talents Death Knight Frost                  # class first when the spec name is shared
 wowapi price <item id>                             # AH commodity price
 wowapi get static /data/wow/playable-specialization/64
 wowapi get dynamic /data/wow/realm/lightbringer
@@ -106,6 +113,9 @@ Tools (all read-only):
 | `wow_character_encounters` | Dungeon or raid progress per difficulty; filter by expansion for boss kills |
 | `wow_mythic_plus` | Mythic+ rating and best runs for a season, plus this week's runs |
 | `wow_profession_recipes` | Recipes a character knows vs. is missing in a profession tier; with `sources`, where to get each one |
+| `wow_races` | Playable races: factions, allied race, classes, racial abilities |
+| `wow_classes` | Classes and specs: role, primary stat, description, hero trees, PvP talents |
+| `wow_talents` | A spec's class, spec, hero and PvP talents with descriptions and choice options |
 | `wow_item_search`, `wow_item` | Find items by name; item details |
 | `wow_profession`, `wow_recipe` | Profession tiers and recipe lists; a recipe's reagents |
 | `wow_commodity_price` | Region-wide Auction House price for stackable goods |
