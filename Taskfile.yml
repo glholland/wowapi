@@ -10,9 +10,8 @@ vars:
   # Version stamped into builds: the nearest git tag, else the commit.
   VERSION:
     sh: git describe --tags --always --dirty 2>/dev/null || echo dev
-  LDFLAGS: -s -w -X main.version={{.VERSION}}
-  RELEASE_TARGETS: windows/amd64 windows/arm64 linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
   # Dev tools run via `go run`, so nothing needs installing first.
+  GORELEASER: github.com/goreleaser/goreleaser/v2@v2.18.2
   STATICCHECK: honnef.co/go/tools/cmd/staticcheck@latest
   GOVULNCHECK: golang.org/x/vuln/cmd/govulncheck@latest
   INSPECTOR: '@modelcontextprotocol/inspector'
@@ -55,44 +54,23 @@ tasks:
       - go install -ldflags "-X main.version={{.VERSION}}" .
 
   release:
-    desc: Cross-compile stripped binaries for every platform into dist/
+    desc: Snapshot release with GoReleaser - every platform's binary and MCP bundle, into dist/ and build/mcpb/ (nothing is published)
     cmds:
-      - rm -rf dist
-      - for: {var: RELEASE_TARGETS, split: ' '}
-        task: release:target
-        vars: {TARGET: '{{.ITEM}}'}
-      - cmd: ls -l dist
-        platforms: [linux, darwin]
+      - go run {{.GORELEASER}} release --snapshot --clean
 
-  release:target:
-    internal: true
-    vars:
-      GOOS: '{{index (splitList "/" .TARGET) 0}}'
-      GOARCH: '{{index (splitList "/" .TARGET) 1}}'
-      EXT: '{{if eq .GOOS "windows"}}.exe{{end}}'
-    env:
-      GOOS: '{{.GOOS}}'
-      GOARCH: '{{.GOARCH}}'
-      CGO_ENABLED: '0'
+  release:check:
+    desc: Validate .goreleaser.yaml
     cmds:
-      - go build -trimpath -ldflags "{{.LDFLAGS}}" -o dist/wowapi-{{.VERSION}}-{{.GOOS}}-{{.GOARCH}}{{.EXT}} .
+      - go run {{.GORELEASER}} check
 
   npm:pack:
-    desc: 'Build the npm packages from a fresh release build into npm/dist (e.g. task npm:pack NPM_VERSION=0.5.0)'
+    desc: 'Build the npm packages and tarballs from a snapshot release into npm/dist (e.g. task npm:pack NPM_VERSION=0.5.0)'
     vars:
       NPM_VERSION: '{{.NPM_VERSION | default "0.0.0-local"}}'
     cmds:
       - task: release
       - node npm/build.mjs --version {{.NPM_VERSION}}
       - cmd: cd npm/dist && for d in wowapi wowapi-*; do npm pack "./$d" --silent; done
-
-  mcpb:pack:
-    desc: 'Build Claude Desktop MCP bundles (.mcpb) into dist/ from a fresh release build (e.g. task mcpb:pack MCPB_VERSION=0.5.0)'
-    vars:
-      MCPB_VERSION: '{{.MCPB_VERSION | default "0.0.0-local"}}'
-    cmds:
-      - task: release
-      - node mcpb/build.mjs --version {{.MCPB_VERSION}}
 
   version:
     desc: Show the version builds will be stamped with, and the built binary's
@@ -105,7 +83,7 @@ tasks:
     desc: Remove build output, release artifacts and coverage files
     cmds:
       - go clean
-      - rm -rf {{.BIN}} dist npm/dist coverage.out .task
+      - rm -rf {{.BIN}} dist build npm/dist coverage.out .task
 
   # ---- Quality ---------------------------------------------------------------
 

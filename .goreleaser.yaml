@@ -1,0 +1,57 @@
+# GoReleaser builds and publishes releases: https://goreleaser.com
+#   task release          local snapshot build into dist/ (nothing published)
+#   task release:check    validate this file
+# In CI, release.yml runs `goreleaser release` for a version tag.
+version: 2
+
+project_name: wowapi
+
+before:
+  hooks:
+    # Record the MCP tool list and install the mcpb CLI for the bundle hooks.
+    - node mcpb/build.mjs --prepare
+
+builds:
+  - id: wowapi
+    main: .
+    binary: wowapi
+    env:
+      - CGO_ENABLED=0
+    goos: [windows, linux, darwin]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version=v{{ .Version }}
+    hooks:
+      post:
+        # One Claude Desktop bundle per platform, from the binary just built.
+        - cmd: node mcpb/build.mjs --version {{ .Version }} --binary "{{ .Path }}" --target {{ .Target }}
+          output: true
+
+archives:
+  # Ship the bare binaries (the npm and MCPB packaging read these names).
+  - id: binaries
+    formats: [binary]
+    name_template: "{{ .ProjectName }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+
+checksum:
+  name_template: SHA256SUMS.txt
+  algorithm: sha256
+  extra_files:
+    - glob: ./build/mcpb/*.mcpb
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot.{{ .ShortCommit }}"
+
+changelog:
+  # Used for tags pushed by hand; release-please writes its own notes, which
+  # "keep-existing" below leaves untouched.
+  use: github-native
+
+release:
+  name_template: "wowapi {{ .Tag }}"
+  mode: keep-existing
+  prerelease: auto
+  extra_files:
+    - glob: ./build/mcpb/*.mcpb

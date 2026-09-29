@@ -29,10 +29,11 @@ are in [README.md](README.md).
 | `blizzard/creation.go` | Character creation data: races, classes, specializations, talent trees |
 | `blizzard/*_test.go` | Tests against an `httptest` fake API — no network or credentials needed |
 | `Taskfile.yml` | All common commands ([taskfile.dev](https://taskfile.dev)) |
-| `npm/build.mjs` | Builds the npm launcher + per-platform packages from `dist/` |
+| `.goreleaser.yaml` | GoReleaser: builds, bare-binary archives, per-platform MCP bundle hooks, checksums, GitHub release |
+| `npm/build.mjs` | Builds the npm launcher + per-platform packages from GoReleaser's `dist/artifacts.json` |
 | `npm/wowapi/bin/wowapi.js` | npm launcher: finds the platform binary and runs it with inherited stdio |
 | `npm/publish.sh` | Publishes the npm packages (platform packages first; skips existing versions) |
-| `mcpb/build.mjs` | Builds and validates one Claude Desktop bundle (`.mcpb`) per platform; tool list comes from `wowapi mcp -list -json` |
+| `mcpb/build.mjs` | Claude Desktop bundles: `--prepare` (GoReleaser before hook: tool list from `wowapi mcp -list -json`, mcpb CLI) and one bundle per build (post hook) into `build/mcpb/` |
 | `.github/workflows/` | `ci.yml` (PR/push checks on 3 OSes), `pr-title.yml`, `release-please.yml` (release PRs), `release.yml` (build + publish; tag push or called by release-please), `vuln.yml` (weekly) |
 | `release-please-config.json`, `.release-please-manifest.json` | Versioning and changelog config; the manifest holds the current version |
 
@@ -106,8 +107,12 @@ Use Task rather than raw `go` commands:
 - The npm launcher must keep stdio inherited and pass signals and exit codes
   through; MCP clients talk to the Go binary over stdin/stdout. Test packaging
   with `task npm:pack` and a global install into a temporary `--prefix`.
-- Release filenames (`dist/wowapi-<version>-<goos>-<goarch>`) are parsed by
-  `npm/build.mjs` and `mcpb/build.mjs`; keep them in step if `task release` changes.
+- Releases go through GoReleaser (`task release` locally, snapshot only).
+  `npm/build.mjs` finds binaries via `dist/artifacts.json`, and the MCP bundle
+  hooks write to `build/mcpb/`, which the checksum and release sections of
+  `.goreleaser.yaml` pick up; keep those paths in step. npm publishing stays
+  outside GoReleaser (its npm support is Pro-only and uses a postinstall
+  download instead of per-platform packages).
 - Read configuration with `blizzard.Env`, not `os.Getenv`: MCP bundle clients
   can pass unfilled settings through literally (`${user_config.realm}`), and
   `Env` treats those as unset.

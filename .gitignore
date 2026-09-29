@@ -17,3 +17,4 @@ coverage.out
 .idea/
 .DS_Store
 Thumbs.db
+/build/

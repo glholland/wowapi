@@ -7,6 +7,7 @@
 // npm installs just the platform package matching the user's machine (via the
 // os/cpu fields), the same pattern esbuild and Biome use.
 //
+// Reads the binaries GoReleaser built (dist/artifacts.json).
 // Usage: node npm/build.mjs --version 0.5.0 [--dist dist] [--out npm/dist]
 import fs from "node:fs";
 import path from "node:path";
@@ -52,21 +53,30 @@ const write = (dir, file, data) => {
 };
 
 fs.rmSync(outDir, { recursive: true, force: true });
-const distFiles = fs.readdirSync(distDir);
+
+// GoReleaser records every binary it built in dist/artifacts.json.
+const artifactsFile = path.join(distDir, "artifacts.json");
+if (!fs.existsSync(artifactsFile)) {
+  console.error(`npm/build.mjs: ${artifactsFile} not found; run GoReleaser first (task release)`);
+  process.exit(1);
+}
+const artifacts = JSON.parse(fs.readFileSync(artifactsFile, "utf8"));
+const binaryFor = (t) => {
+  const found = artifacts.find((a) => a.type === "Binary" && a.goos === t.goos && a.goarch === t.goarch);
+  if (!found) {
+    console.error(`npm/build.mjs: no ${t.goos}/${t.goarch} binary in ${artifactsFile}`);
+    process.exit(1);
+  }
+  return path.resolve(root, found.path);
+};
 const optionalDependencies = {};
 
 for (const t of targets) {
-  const suffix = `-${t.goos}-${t.goarch}${t.goos === "windows" ? ".exe" : ""}`;
-  const matches = distFiles.filter((f) => f.startsWith("wowapi-") && f.endsWith(suffix));
-  if (matches.length !== 1) {
-    console.error(`npm/build.mjs: expected one binary ending in ${suffix} in ${distDir}, found ${matches.length}`);
-    process.exit(1);
-  }
   const name = `wowapi-${t.os}-${t.cpu}`;
   const dir = path.join(outDir, name);
   const exe = t.os === "win32" ? "wowapi.exe" : "wowapi";
   fs.mkdirSync(path.join(dir, "bin"), { recursive: true });
-  fs.copyFileSync(path.join(distDir, matches[0]), path.join(dir, "bin", exe));
+  fs.copyFileSync(binaryFor(t), path.join(dir, "bin", exe));
   fs.chmodSync(path.join(dir, "bin", exe), 0o755);
   write(dir, "package.json", {
     name,

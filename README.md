@@ -231,7 +231,8 @@ Ready-made starting points that tell the model which tools to use:
 | Task | What it does |
 |---|---|
 | `task build` | Build `wowapi` / `wowapi.exe`, stamped with the git version |
-| `task release` | Cross-compile stripped binaries for Windows, Linux and macOS (amd64 + arm64) into `dist/` |
+| `task release` | Snapshot release with [GoReleaser](https://goreleaser.com): binaries for Windows, Linux and macOS (amd64 + arm64) plus MCP bundles and checksums, nothing published |
+| `task release:check` | Validate `.goreleaser.yaml` |
 | `task version` | Show the version builds will carry and the built binary's |
 | `task install` | `go install` into your Go bin directory |
 | `task test` | Run the tests (no network or credentials needed) |
@@ -251,7 +252,6 @@ Ready-made starting points that tell the model which tools to use:
 | `task clean` | Remove build output, `dist/` and coverage files |
 
 | `task npm:pack` | Build the npm packages and tarballs into `npm/dist` (`NPM_VERSION=0.5.0`) |
-| `task mcpb:pack` | Build and validate the Claude Desktop bundles into `dist/` (`MCPB_VERSION=0.5.0`) |
 
 Linting and vulnerability tools run through `go run`, so there is nothing
 extra to install. Builds are versioned from `git describe`, so tag releases
@@ -284,9 +284,11 @@ git tag v0.5.1
 git push origin v0.5.1
 ```
 
-The release workflow re-runs the checks, cross-compiles, builds a Claude Desktop bundle per
-platform, creates a GitHub release with the binaries, bundles and checksums,
-and publishes to npm: one package per platform
+The release workflow re-runs the checks, then [GoReleaser](.goreleaser.yaml)
+cross-compiles every platform, packs a Claude Desktop bundle per platform,
+writes `SHA256SUMS.txt` and publishes the GitHub release (keeping
+release-please's changelog as the notes). Finally the npm packages are built
+from GoReleaser's binaries and published: one package per platform
 (`wowapi-win32-x64`, `wowapi-darwin-arm64`, ...) plus the `wowapi` launcher
 that depends on them. A tag like `v0.6.0-rc.1` becomes a pre-release and goes
 to npm's `next` tag. Publishing needs an `NPM_TOKEN` repository secret (an npm

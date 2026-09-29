@@ -53,33 +53,22 @@ jobs:
       - name: Vulnerability scan
         run: task vuln
 
-      - name: Cross-compile
-        run: task release
-
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7 # the MCP bundle hooks run node
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
-      - name: MCP bundles for Claude Desktop
-        run: node mcpb/build.mjs --version "${TAG#v}"
-
-      - name: Checksums
-        working-directory: dist
-        run: sha256sum wowapi-* > SHA256SUMS.txt && cat SHA256SUMS.txt
-
-      - name: Publish the GitHub release
+      # Builds every platform, packs an MCP bundle per platform, writes
+      # SHA256SUMS.txt and publishes the GitHub release. If release-please
+      # already created the release, its notes are kept and assets are added.
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          version: '~> v2'
+          args: release --clean
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            # release-please already created it with the changelog as notes.
-            gh release upload "$TAG" dist/* --clobber
-          else
-            prerelease=""
-            [[ "$TAG" == *-* ]] && prerelease="--prerelease"
-            gh release create "$TAG" dist/* --title "wowapi $TAG" --generate-notes --verify-tag $prerelease
-          fi
+          GITHUB_TOKEN: ${{ github.token }}
+          GORELEASER_CURRENT_TAG: ${{ env.TAG }}
 
       - name: Build npm packages
         run: node npm/build.mjs --version "${TAG#v}"

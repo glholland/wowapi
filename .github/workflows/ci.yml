@@ -87,15 +87,21 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Install Task
-        run: go install github.com/go-task/task/v3/cmd/task@latest
-
       - uses: actions/setup-node@v7
         with:
           node-version: 22
 
-      - name: Cross-compile, then package for npm and MCPB
-        run: |
-          task release
-          node npm/build.mjs --version 0.0.0-ci
-          node mcpb/build.mjs --version 0.0.0-ci
+      - name: GoReleaser config is valid
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          version: '~> v2'
+          args: check
+
+      - name: Snapshot release (binaries, MCP bundles, checksums)
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          version: '~> v2'
+          args: release --snapshot --clean
+
+      - name: npm packages
+        run: node npm/build.mjs --version 0.0.0-ci
