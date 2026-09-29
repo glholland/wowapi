@@ -239,6 +239,7 @@ Ready-made starting points that tell the model which tools to use:
 | `task lint` | staticcheck |
 | `task vuln` | govulncheck: known vulnerabilities in code and dependencies |
 | `task cover` | Tests with per-function coverage |
+| `task secrets` | Scan the whole git history for committed secrets (gitleaks) |
 | `task ci` | check + lint + vuln + release, in one go |
 | `task fmt` | Format the code |
 | `task tidy` | `go mod tidy` |
@@ -256,25 +257,42 @@ Linting and vulnerability tools run through `go run`, so there is nothing
 extra to install. Builds are versioned from `git describe`, so tag releases
 (`git tag v0.5.0`) to get clean version numbers.
 
-### Releasing
+### Contributing and releasing
 
-Push a version tag and [the release workflow](.github/workflows/release.yml)
-does the rest:
+Changes land through pull requests to `main`, which are squash-merged. PR
+titles must follow [Conventional Commits](https://www.conventionalcommits.org/)
+(`feat: ...`, `fix(mcp): ...`, `feat!: ...` for breaking changes) because the
+title becomes the commit message that drives versioning. Each PR runs:
+
+| Check | What it does |
+|---|---|
+| Test (Linux, Windows, macOS) | `task check` and an MCP startup check on every OS we ship |
+| Lint and vulnerability scan | staticcheck and govulncheck |
+| Secret scan | gitleaks over the full git history |
+| Package | Cross-compile and build the npm packages and MCP bundles (dry run) |
+| PR title | Conventional Commits format |
+
+Releases are automated with [release-please](https://github.com/googleapis/release-please):
+every merge to `main` updates a **release PR** that bumps the version (a `feat`
+bumps the minor version while we're below 1.0, a `fix` the patch) and writes
+`CHANGELOG.md`. Merging the release PR tags the version and runs
+[the release workflow](.github/workflows/release.yml). To release by hand
+instead, push a tag:
 
 ```sh
-git tag v0.5.0
-git push origin v0.5.0
+git tag v0.5.1
+git push origin v0.5.1
 ```
 
-It re-runs the checks, cross-compiles, builds a Claude Desktop bundle per
+The release workflow re-runs the checks, cross-compiles, builds a Claude Desktop bundle per
 platform, creates a GitHub release with the binaries, bundles and checksums,
 and publishes to npm: one package per platform
 (`wowapi-win32-x64`, `wowapi-darwin-arm64`, ...) plus the `wowapi` launcher
 that depends on them. A tag like `v0.6.0-rc.1` becomes a pre-release and goes
 to npm's `next` tag. Publishing needs an `NPM_TOKEN` repository secret (an npm
 automation or granular access token); without it the packages are built but
-not published. [CI](.github/workflows/ci.yml) runs the same checks on every
-push and pull request.
+not published. Dependabot opens weekly PRs for Go modules and GitHub Actions,
+and a weekly scheduled govulncheck catches new advisories.
 
 See [AGENTS.md](AGENTS.md) for notes aimed at AI coding assistants.
 

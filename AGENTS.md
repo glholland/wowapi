@@ -33,7 +33,8 @@ are in [README.md](README.md).
 | `npm/wowapi/bin/wowapi.js` | npm launcher: finds the platform binary and runs it with inherited stdio |
 | `npm/publish.sh` | Publishes the npm packages (platform packages first; skips existing versions) |
 | `mcpb/build.mjs` | Builds and validates one Claude Desktop bundle (`.mcpb`) per platform; tool list comes from `wowapi mcp -list -json` |
-| `.github/workflows/` | `ci.yml` (checks on push/PR), `release.yml` (on `v*` tags: GitHub release + npm) |
+| `.github/workflows/` | `ci.yml` (PR/push checks on 3 OSes), `pr-title.yml`, `release-please.yml` (release PRs), `release.yml` (build + publish; tag push or called by release-please), `vuln.yml` (weekly) |
+| `release-please-config.json`, `.release-please-manifest.json` | Versioning and changelog config; the manifest holds the current version |
 
 ## Commands
 
@@ -98,6 +99,10 @@ Use Task rather than raw `go` commands:
   startup otherwise. `task mcp:list` or the tests catch it.
 - The SDK validates structured output against its schema on every call, and
   does not enforce required prompt arguments; prompts check them by hand.
+- PR titles must be Conventional Commits (`feat:`, `fix:`, `refactor:`, ...):
+  PRs are squash-merged and release-please reads the titles. Don't edit
+  `CHANGELOG.md`, the version in `main.go` (marked `x-release-please-version`)
+  or `.release-please-manifest.json` by hand; the release PR does that.
 - The npm launcher must keep stdio inherited and pass signals and exit codes
   through; MCP clients talk to the Go binary over stdin/stdout. Test packaging
   with `task npm:pack` and a global install into a temporary `--prefix`.

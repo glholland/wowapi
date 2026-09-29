@@ -1,24 +1,33 @@
 name: Release
 
-# Push a version tag to release:
-#   git tag v0.5.0 && git push origin v0.5.0
+# Normally triggered by release-please (see release-please.yml) when its
+# release PR is merged. A tag can also be pushed by hand:
+#   git tag v0.5.1 && git push origin v0.5.1
 # Tags with a pre-release suffix (v0.6.0-rc.1) become GitHub pre-releases and
 # are published to npm under the "next" dist-tag instead of "latest".
 on:
   push:
     tags: ['v*']
+  workflow_call:
+    inputs:
+      tag:
+        description: The release tag to build, e.g. v0.6.0
+        required: true
+        type: string
 
 permissions:
-  contents: write # create the GitHub release
+  contents: write # create or upload to the GitHub release
 
 jobs:
   release:
     runs-on: ubuntu-latest
     env:
+      TAG: ${{ inputs.tag || github.ref_name }}
       HAS_NPM_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.tag || github.ref }}
           fetch-depth: 0 # git describe stamps the tag into the binaries
 
       - uses: actions/setup-go@v7
@@ -30,8 +39,8 @@ jobs:
 
       - name: Check the tag is a semver version
         run: |
-          if ! [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "::error::Tag $GITHUB_REF_NAME is not vMAJOR.MINOR.PATCH[-prerelease]"
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Tag $TAG is not vMAJOR.MINOR.PATCH[-prerelease]"
             exit 1
           fi
 
@@ -53,23 +62,27 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: MCP bundles for Claude Desktop
-        run: node mcpb/build.mjs --version "${GITHUB_REF_NAME#v}"
+        run: node mcpb/build.mjs --version "${TAG#v}"
 
       - name: Checksums
         working-directory: dist
         run: sha256sum wowapi-* > SHA256SUMS.txt && cat SHA256SUMS.txt
 
-      - name: Create GitHub release
+      - name: Publish the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          prerelease=""
-          [[ "$GITHUB_REF_NAME" == *-* ]] && prerelease="--prerelease"
-          gh release create "$GITHUB_REF_NAME" dist/* \
-            --title "wowapi $GITHUB_REF_NAME" --generate-notes --verify-tag $prerelease
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            # release-please already created it with the changelog as notes.
+            gh release upload "$TAG" dist/* --clobber
+          else
+            prerelease=""
+            [[ "$TAG" == *-* ]] && prerelease="--prerelease"
+            gh release create "$TAG" dist/* --title "wowapi $TAG" --generate-notes --verify-tag $prerelease
+          fi
 
       - name: Build npm packages
-        run: node npm/build.mjs --version "${GITHUB_REF_NAME#v}"
+        run: node npm/build.mjs --version "${TAG#v}"
 
       - name: Publish to npm
         if: env.HAS_NPM_TOKEN == 'true'

@@ -141,6 +141,11 @@ tasks:
     cmds:
       - go run {{.GOVULNCHECK}} ./...
 
+  secrets:
+    desc: Scan the whole git history for committed secrets (gitleaks)
+    cmds:
+      - go run github.com/zricethezav/gitleaks/v8@v8.30.1 git --redact --verbose .
+
   cover:
     desc: Run tests with coverage and print per-function results
     cmds:
