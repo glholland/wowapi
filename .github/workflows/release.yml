@@ -3,6 +3,8 @@ name: Release
 # Normally triggered by release-please (see release-please.yml) when its
 # release PR is merged. A tag can also be pushed by hand:
 #   git tag v0.5.1 && git push origin v0.5.1
+# Or run it from the Actions tab for an existing tag, e.g. to republish npm
+# packages without touching the GitHub release (github_release: false).
 # Tags with a pre-release suffix (v0.6.0-rc.1) become GitHub pre-releases and
 # are published to npm under the "next" dist-tag instead of "latest".
 on:
@@ -14,6 +16,16 @@ on:
         description: The release tag to build, e.g. v0.6.0
         required: true
         type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to build, e.g. v0.5.1
+        required: true
+        type: string
+      github_release:
+        description: Also create/update the GitHub release (off = npm only)
+        type: boolean
+        default: false
 
 permissions:
   contents: write # create or upload to the GitHub release
@@ -25,6 +37,9 @@ jobs:
     env:
       TAG: ${{ inputs.tag || github.ref_name }}
       PRIVATE_REPO: ${{ github.event.repository.private }}
+      # Manual runs publish npm only unless asked; tag pushes and
+      # release-please always publish the GitHub release too.
+      GITHUB_RELEASE: ${{ github.event_name != 'workflow_dispatch' || inputs.github_release }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -54,10 +69,11 @@ jobs:
       - name: Vulnerability scan
         run: task vuln
 
+      # No registry-url: that writes an .npmrc with a placeholder token, which
+      # npm falls back to when trusted publishing fails, hiding the real error.
       - uses: actions/setup-node@v7 # MCP bundle hooks + npm publishing
         with:
-          node-version: 24 # npm 11.5.1+ is required for trusted publishing
-          registry-url: https://registry.npmjs.org
+          node-version: 24
 
       # Builds every platform, packs an MCP bundle per platform, writes
       # SHA256SUMS.txt and publishes the GitHub release. If release-please
@@ -66,13 +82,23 @@ jobs:
         uses: goreleaser/goreleaser-action@v7
         with:
           version: '~> v2'
-          args: release --clean
+          args: ${{ env.GITHUB_RELEASE == 'true' && 'release --clean' || 'release --clean --skip=publish' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
           GORELEASER_CURRENT_TAG: ${{ env.TAG }}
 
       - name: Build npm packages
         run: node npm/build.mjs --version "${TAG#v}"
+
+      - name: Prepare npm trusted publishing
+        if: env.PRIVATE_REPO != 'true'
+        run: |
+          npm install -g npm@latest # 11.5.1+ is required for trusted publishing
+          echo "npm $(npm --version)"
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "::error::This job has no id-token permission, so npm trusted publishing cannot work. Grant id-token: write here and in the calling job."
+            exit 1
+          fi
 
       # Trusted publishing: npm checks this run's GitHub identity (OIDC)
       # against the publishers configured on each package (release-please.yml

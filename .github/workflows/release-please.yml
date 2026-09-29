@@ -30,6 +30,10 @@ jobs:
   publish:
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true'
+    # A reusable workflow gets its token permissions from this calling job.
+    permissions:
+      contents: write
+      id-token: write # npm trusted publishing
     uses: ./.github/workflows/release.yml
     with:
       tag: ${{ needs.release-please.outputs.tag_name }}
