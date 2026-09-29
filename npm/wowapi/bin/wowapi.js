@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Launcher for the wowapi Go binary. npm installs exactly one platform package
-// (wowapi-<platform>-<arch>) through optionalDependencies; this script finds
+// (@gholland/wowapi-<platform>-<arch>) through optionalDependencies; this script finds
 // its binary and runs it with the same arguments and stdio, so `wowapi mcp`
 // works as a stdio MCP server.
 "use strict";
@@ -9,7 +9,7 @@ const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const pkg = `wowapi-${process.platform}-${process.arch}`;
+const pkg = `@gholland/wowapi-${process.platform}-${process.arch}`;
 const exe = process.platform === "win32" ? "wowapi.exe" : "wowapi";
 
 function findBinary() {

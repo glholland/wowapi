@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 // Builds the npm packages from the cross-compiled binaries in dist/:
 //
-//   wowapi                 launcher (bin/wowapi.js) + optionalDependencies
-//   wowapi-<os>-<cpu>      one per platform, holding only that binary
+//   wowapi                          launcher (bin/wowapi.js) + optionalDependencies
+//   @gholland/wowapi-<os>-<cpu>     one per platform, holding only that binary
 //
 // npm installs just the platform package matching the user's machine (via the
-// os/cpu fields), the same pattern esbuild and Biome use.
+// os/cpu fields), the same pattern esbuild (@esbuild/win32-x64) and Biome use.
+// Platform packages live under the maintainer's npm scope: unscoped look-alike
+// names from a new account trip npm's spam detection.
 //
 // Binaries come from GoReleaser's dist/artifacts.json, or with --assets from a
 // folder of GitHub release downloads (wowapi-<tag>-<goos>-<goarch>[.exe]); the
@@ -82,11 +84,12 @@ if (args.assets) {
     return path.resolve(root, found.path);
   };
 }
+const SCOPE = "@gholland";
 const optionalDependencies = {};
 
 for (const t of targets) {
-  const name = `wowapi-${t.os}-${t.cpu}`;
-  const dir = path.join(outDir, name);
+  const name = `${SCOPE}/wowapi-${t.os}-${t.cpu}`;
+  const dir = path.join(outDir, `wowapi-${t.os}-${t.cpu}`);
   const exe = t.os === "win32" ? "wowapi.exe" : "wowapi";
   fs.mkdirSync(path.join(dir, "bin"), { recursive: true });
   fs.copyFileSync(binaryFor(t), path.join(dir, "bin", exe));

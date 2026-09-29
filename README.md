@@ -289,8 +289,8 @@ cross-compiles every platform, packs a Claude Desktop bundle per platform,
 writes `SHA256SUMS.txt` and publishes the GitHub release (keeping
 release-please's changelog as the notes). Finally the npm packages are built
 from GoReleaser's binaries and published: one package per platform
-(`wowapi-win32-x64`, `wowapi-darwin-arm64`, ...) plus the `wowapi` launcher
-that depends on them. A tag like `v0.6.0-rc.1` becomes a pre-release and goes
+(`@gholland/wowapi-win32-x64`, `@gholland/wowapi-darwin-arm64`, ...) plus the
+`wowapi` launcher that depends on them. A tag like `v0.6.0-rc.1` becomes a pre-release and goes
 to npm's `next` tag. Dependabot opens weekly PRs for Go modules and GitHub
 Actions, and a weekly scheduled govulncheck catches new advisories.
 
@@ -312,8 +312,9 @@ repositories. Setting it up is one-time:
    ```
 
 2. **Add two trusted publishers to each of the 7 packages** (`wowapi`,
-   `wowapi-win32-x64`, `wowapi-win32-arm64`, `wowapi-darwin-x64`,
-   `wowapi-darwin-arm64`, `wowapi-linux-x64`, `wowapi-linux-arm64`): on
+   `@gholland/wowapi-win32-x64`, `@gholland/wowapi-win32-arm64`,
+   `@gholland/wowapi-darwin-x64`, `@gholland/wowapi-darwin-arm64`,
+   `@gholland/wowapi-linux-x64`, `@gholland/wowapi-linux-arm64`): on
    npmjs.com open the package → **Settings** → **Trusted Publisher** →
    **GitHub Actions**, with organization/user `glholland`, repository
    `wowapi`, and workflow filename `release-please.yml` (automated releases);
