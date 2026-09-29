@@ -291,12 +291,41 @@ release-please's changelog as the notes). Finally the npm packages are built
 from GoReleaser's binaries and published: one package per platform
 (`wowapi-win32-x64`, `wowapi-darwin-arm64`, ...) plus the `wowapi` launcher
 that depends on them. A tag like `v0.6.0-rc.1` becomes a pre-release and goes
-to npm's `next` tag. Publishing needs an `NPM_TOKEN` repository secret (an npm
-automation or granular access token); without it the packages are built but
-not published. Dependabot opens weekly PRs for Go modules and GitHub Actions,
-and a weekly scheduled govulncheck catches new advisories.
+to npm's `next` tag. Dependabot opens weekly PRs for Go modules and GitHub
+Actions, and a weekly scheduled govulncheck catches new advisories.
+
+#### npm trusted publishing
+
+npm publishing uses [trusted publishing](https://docs.npmjs.com/trusted-publishers):
+the workflow proves its GitHub identity to npm (OIDC), so no npm token is
+stored anywhere, and npm adds a provenance statement linking each version to
+the workflow run that built it. npm only allows this from public
+repositories. Setting it up is one-time:
+
+1. **Create the packages.** Trusted publishers can only be added to packages
+   that exist, so publish the first version by hand from a GitHub release:
+
+   ```sh
+   npm login
+   task npm:bootstrap TAG=v0.5.0   # builds the 7 packages from the release binaries
+   task npm:publish                # publishes them as you
+   ```
+
+2. **Add two trusted publishers to each of the 7 packages** (`wowapi`,
+   `wowapi-win32-x64`, `wowapi-win32-arm64`, `wowapi-darwin-x64`,
+   `wowapi-darwin-arm64`, `wowapi-linux-x64`, `wowapi-linux-arm64`): on
+   npmjs.com open the package → **Settings** → **Trusted Publisher** →
+   **GitHub Actions**, with organization/user `glholland`, repository
+   `wowapi`, and workflow filename `release-please.yml` (automated releases);
+   then again with `release.yml` (tags pushed by hand).
+3. **Optionally**, in each package's settings, require trusted publishing and
+   disallow tokens, so only the workflow can publish.
 
 See [AGENTS.md](AGENTS.md) for notes aimed at AI coding assistants.
+
+## License
+
+[MIT](LICENSE)
 
 ## Things to know
 

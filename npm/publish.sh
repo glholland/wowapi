@@ -3,6 +3,9 @@
 # the launcher's optionalDependencies resolve the moment it is published.
 # Versions already on the registry are skipped, so a failed run can be re-run.
 # Pre-releases (e.g. 0.6.0-rc.1) are published under the "next" dist-tag.
+#
+# Auth: in GitHub Actions, npm trusted publishing (OIDC, no token); locally,
+# whoever is signed in with `npm login` (used once, to create the packages).
 set -euo pipefail
 
 out="${1:-npm/dist}"

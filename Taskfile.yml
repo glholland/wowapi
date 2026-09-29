@@ -72,6 +72,26 @@ tasks:
       - node npm/build.mjs --version {{.NPM_VERSION}}
       - cmd: cd npm/dist && for d in wowapi wowapi-*; do npm pack "./$d" --silent; done
 
+  npm:bootstrap:
+    desc: 'One time: build real npm packages from a GitHub release to create them on npm (e.g. task npm:bootstrap TAG=v0.5.0), then run task npm:publish'
+    vars:
+      TAG: '{{.TAG | default "v0.5.0"}}'
+    cmds:
+      - rm -rf build/bootstrap
+      - gh release download {{.TAG}} --pattern "wowapi-v*" --dir build/bootstrap
+      - node npm/build.mjs --version {{trimPrefix "v" .TAG}} --assets build/bootstrap
+      - echo "Packages for {{.TAG}} are in npm/dist. Sign in with npm login, then run task npm:publish."
+
+  npm:publish:
+    desc: Publish the packages in npm/dist as the npm user you are signed in as (normally CI does this)
+    preconditions:
+      - sh: npm whoami
+        msg: Sign in first with npm login
+      - sh: test -f npm/dist/wowapi/package.json
+        msg: Nothing to publish; run task npm:bootstrap (or task npm:pack) first
+    cmds:
+      - bash npm/publish.sh
+
   version:
     desc: Show the version builds will be stamped with, and the built binary's
     cmds:
