@@ -18,7 +18,8 @@ are in [README.md](README.md).
 | `mcp.go` | MCP tool definitions (`wow_*`) using `github.com/modelcontextprotocol/go-sdk` |
 | `blizzard/client.go` | OAuth client-credentials flow, HTTP, response cache |
 | `blizzard/wow.go` | Endpoint helpers (character, item, search, profession, recipe, commodities), `Slim`, `RealmSlug`, `FormatGold` |
-| `blizzard/blizzard_test.go` | Tests against an `httptest` fake API — no network or credentials needed |
+| `blizzard/progress.go` | Condensed character progress: dungeon/raid encounters, Mythic+ seasons, known vs. missing recipes |
+| `blizzard/*_test.go` | Tests against an `httptest` fake API — no network or credentials needed |
 | `Taskfile.yml` | All common commands ([taskfile.dev](https://taskfile.dev)) |
 
 ## Commands

@@ -69,6 +69,12 @@ wowapi item 19019
 wowapi profession 197                              # Tailoring skill tiers
 wowapi profession 197 <skill-tier-id>              # recipes for one expansion
 wowapi recipe <id>
+wowapi recipes tailoring                           # known vs. missing recipes (newest tier)
+wowapi recipes -tier 2918 -known tailoring Lightbringer Cëldis
+wowapi encounters                                  # dungeon progress, every expansion
+wowapi encounters -kind raids -expansion midnight  # raid bosses, kill counts and dates
+wowapi mythic                                      # Mythic+ rating and best runs, current season
+wowapi mythic -season 17
 wowapi price <item id>                             # AH commodity price
 wowapi get static /data/wow/playable-specialization/64
 wowapi get dynamic /data/wow/realm/lightbringer
@@ -91,9 +97,18 @@ claude mcp add wowapi --scope user ^
   -- C:\path\to\wowapi.exe mcp
 ```
 
-Tools: `wow_character`, `wow_item_search`, `wow_item`, `wow_profession`,
-`wow_recipe`, `wow_commodity_price`, `wow_api_get` (any `/data/wow/` or
-`/profile/wow/` endpoint). All are read-only.
+Tools (all read-only):
+
+| Tool | What it answers |
+|---|---|
+| `wow_character` | Any profile section: summary, equipment, stats, professions, reputations, achievements, ... |
+| `wow_character_encounters` | Dungeon or raid progress per difficulty; filter by expansion for boss kills |
+| `wow_mythic_plus` | Mythic+ rating and best runs for a season, plus this week's runs |
+| `wow_profession_recipes` | Recipes a character knows vs. is missing in a profession tier |
+| `wow_item_search`, `wow_item` | Find items by name; item details |
+| `wow_profession`, `wow_recipe` | Profession tiers and recipe lists; a recipe's reagents |
+| `wow_commodity_price` | Region-wide Auction House price for stackable goods |
+| `wow_api_get` | Any other `/data/wow/` or `/profile/wow/` endpoint |
 
 ## Development
 

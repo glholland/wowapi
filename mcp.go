@@ -18,6 +18,27 @@ type characterArgs struct {
 	Section string `json:"section,omitempty" jsonschema:"Which part of the profile to fetch. Default 'summary'."`
 }
 
+type encounterArgs struct {
+	Realm     string `json:"realm,omitempty" jsonschema:"Realm name or slug. Defaults to WOW_REALM."`
+	Name      string `json:"name,omitempty" jsonschema:"Character name, exact spelling including accents. Defaults to WOW_CHARACTER."`
+	Kind      string `json:"kind,omitempty" jsonschema:"dungeons (default) or raids."`
+	Expansion string `json:"expansion,omitempty" jsonschema:"Only expansions whose name contains this, e.g. 'midnight' or 'current season'. Setting it adds per-boss kill counts and last-kill dates."`
+}
+
+type mythicArgs struct {
+	Realm    string `json:"realm,omitempty" jsonschema:"Realm name or slug. Defaults to WOW_REALM."`
+	Name     string `json:"name,omitempty" jsonschema:"Character name, exact spelling including accents. Defaults to WOW_CHARACTER."`
+	SeasonID int    `json:"season_id,omitempty" jsonschema:"Mythic+ season ID. Omit for the current season (also returns this week's best runs)."`
+}
+
+type recipeProgressArgs struct {
+	Realm        string `json:"realm,omitempty" jsonschema:"Realm name or slug. Defaults to WOW_REALM."`
+	Name         string `json:"name,omitempty" jsonschema:"Character name, exact spelling including accents. Defaults to WOW_CHARACTER."`
+	Profession   string `json:"profession" jsonschema:"Profession name (e.g. 'Tailoring') or ID (e.g. 197)."`
+	SkillTierID  int    `json:"skill_tier_id,omitempty" jsonschema:"Skill tier ID, e.g. 2918 for Midnight Tailoring. Omit for the newest tier the character has learned."`
+	IncludeKnown bool   `json:"include_known,omitempty" jsonschema:"Also list the known recipes by category. Default false (missing recipes only)."`
+}
+
 type itemSearchArgs struct {
 	Name  string `json:"name" jsonschema:"Text the item name contains, e.g. 'Arcanoweave'."`
 	Limit int    `json:"limit,omitempty" jsonschema:"Max results (1-100, default 25)."`
@@ -57,6 +78,33 @@ func runMCP(ctx context.Context, c *blizzard.Client) error {
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, a characterArgs) (*mcp.CallToolResult, any, error) {
 		realm, name := firstNonEmpty(a.Realm, os.Getenv("WOW_REALM")), firstNonEmpty(a.Name, os.Getenv("WOW_CHARACTER"))
 		return rawResult(c.Character(ctx, realm, name, a.Section))
+	})
+
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "wow_character_encounters",
+		Description: "A character's dungeon or raid progress: per instance and difficulty, bosses killed out of total. Without an expansion filter it covers every expansion but omits individual bosses; filter (e.g. 'midnight') for boss kill counts and last-kill dates.",
+		Annotations: readOnly,
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, a encounterArgs) (*mcp.CallToolResult, any, error) {
+		realm, name := firstNonEmpty(a.Realm, os.Getenv("WOW_REALM")), firstNonEmpty(a.Name, os.Getenv("WOW_CHARACTER"))
+		return jsonResult(c.Encounters(ctx, realm, name, a.Kind, a.Expansion))
+	})
+
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "wow_mythic_plus",
+		Description: "A character's Mythic+ season: season name and dates, overall rating, and best runs (dungeon, key level, timed or not, duration, rating, affixes, party). For the current season it also includes this week's best runs. A character with no runs returns an empty list with a note.",
+		Annotations: readOnly,
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, a mythicArgs) (*mcp.CallToolResult, any, error) {
+		realm, name := firstNonEmpty(a.Realm, os.Getenv("WOW_REALM")), firstNonEmpty(a.Name, os.Getenv("WOW_CHARACTER"))
+		return jsonResult(c.MythicKeystoneSeason(ctx, realm, name, a.SeasonID))
+	})
+
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "wow_profession_recipes",
+		Description: "Compare the recipes a character knows with every recipe in a profession skill tier (defaults to the newest tier they have, e.g. Midnight Tailoring). Returns skill level, known/total counts and the missing recipes grouped by category. Use wow_recipe for a recipe's reagents.",
+		Annotations: readOnly,
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, a recipeProgressArgs) (*mcp.CallToolResult, any, error) {
+		realm, name := firstNonEmpty(a.Realm, os.Getenv("WOW_REALM")), firstNonEmpty(a.Name, os.Getenv("WOW_CHARACTER"))
+		return jsonResult(c.ProfessionRecipes(ctx, realm, name, a.Profession, a.SkillTierID, a.IncludeKnown))
 	})
 
 	mcp.AddTool(s, &mcp.Tool{

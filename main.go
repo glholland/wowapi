@@ -17,12 +17,17 @@ import (
 	"github.com/glholland/wowapi/blizzard"
 )
 
-const version = "0.1.0"
+const version = "0.2.0"
 
 const usage = `wowapi - World of Warcraft Battle.net API client and MCP server
 
 Usage:
   wowapi character [-section S] [realm] [name]   character profile (realm/name default to WOW_REALM/WOW_CHARACTER)
+  wowapi encounters [-kind dungeons|raids] [-expansion E] [realm] [name]
+                                                 dungeon or raid boss progress
+  wowapi mythic [-season N] [realm] [name]       Mythic+ rating and best runs (default: current season)
+  wowapi recipes [-tier N] [-known] <profession> [realm] [name]
+                                                 known vs. missing recipes for a profession tier
   wowapi search <item name>                      find item IDs by name
   wowapi item <id>                               item details
   wowapi profession [id [skill-tier-id]]         professions, skill tiers, recipes
@@ -68,6 +73,11 @@ func run() error {
 	fs := flag.NewFlagSet(cmd, flag.ExitOnError)
 	raw := fs.Bool("raw", false, "print the unmodified API response")
 	section := fs.String("section", "summary", "character section: "+strings.Join(blizzard.SectionNames(), ", "))
+	kind := fs.String("kind", "dungeons", "encounters: dungeons or raids")
+	expansion := fs.String("expansion", "", "encounters: only expansions whose name contains this (adds boss detail)")
+	season := fs.Int("season", 0, "mythic: season ID (0 = current)")
+	tier := fs.Int("tier", 0, "recipes: skill tier ID (0 = newest the character has)")
+	known := fs.Bool("known", false, "recipes: also list known recipes")
 	fs.Parse(args)
 	args = fs.Args()
 
@@ -106,18 +116,20 @@ func run() error {
 	case "mcp":
 		return runMCP(ctx, c)
 	case "character":
-		realm, name := os.Getenv("WOW_REALM"), os.Getenv("WOW_CHARACTER")
-		switch len(args) {
-		case 0:
-		case 1:
-			name = args[0]
-		case 2:
-			realm, name = args[0], args[1]
-		default:
-			// Unquoted multi-word realm: everything but the last arg.
-			realm, name = strings.Join(args[:len(args)-1], " "), args[len(args)-1]
-		}
+		realm, name := resolveCharacter(args)
 		return print(c.Character(ctx, realm, name, *section))
+	case "encounters":
+		realm, name := resolveCharacter(args)
+		return printJSON(c.Encounters(ctx, realm, name, *kind, *expansion))
+	case "mythic":
+		realm, name := resolveCharacter(args)
+		return printJSON(c.MythicKeystoneSeason(ctx, realm, name, *season))
+	case "recipes":
+		if len(args) == 0 {
+			return fmt.Errorf("usage: wowapi recipes [-tier N] [-known] <profession> [realm] [name]")
+		}
+		realm, name := resolveCharacter(args[1:])
+		return printJSON(c.ProfessionRecipes(ctx, realm, name, args[0], *tier, *known))
 	case "search":
 		if len(args) == 0 {
 			return fmt.Errorf("usage: wowapi search <item name>")
@@ -170,4 +182,18 @@ func run() error {
 		fmt.Fprint(os.Stderr, usage)
 		return fmt.Errorf("unknown command %q", cmd)
 	}
+}
+
+// resolveCharacter resolves [realm] [name] arguments, defaulting to WOW_REALM and
+// WOW_CHARACTER. An unquoted multi-word realm is everything but the last arg.
+func resolveCharacter(args []string) (realm, name string) {
+	realm, name = os.Getenv("WOW_REALM"), os.Getenv("WOW_CHARACTER")
+	switch len(args) {
+	case 0:
+	case 1:
+		name = args[0]
+	default:
+		realm, name = strings.Join(args[:len(args)-1], " "), args[len(args)-1]
+	}
+	return realm, name
 }

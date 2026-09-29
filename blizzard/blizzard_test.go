@@ -84,6 +84,35 @@ func fakeAPI(t *testing.T) (*Client, *int32) {
 			w.Write([]byte(`{"results":[
 				{"data":{"id":1,"name":{"en_US":"Linen Cloth","de_DE":"Leinenstoff"},"level":5,"quality":{"type":"COMMON"}}},
 				{"data":{"id":2,"name":"Silk Cloth","level":15,"quality":{"type":"COMMON"}}}]}`))
+		case r.URL.Path == "/profile/wow/character/lightbringer/mage/encounters/dungeons" && ns == "profile-us":
+			w.Write([]byte(`{"character":{"name":"Mage"},"expansions":[
+				{"expansion":{"id":74,"name":"Mists of Pandaria"},"instances":[{"instance":{"id":246,"name":"Scholomance"},"modes":[
+					{"difficulty":{"name":"Heroic"},"status":{"name":"Complete"},"progress":{"completed_count":1,"total_count":1,"encounters":[{"completed_count":2,"encounter":{"name":"Darkmaster Gandling"},"last_kill_timestamp":1349514513000}]}}]}]},
+				{"expansion":{"id":516,"name":"Midnight"},"instances":[{"instance":{"id":1300,"name":"Magisters' Terrace"},"modes":[
+					{"difficulty":{"name":"Normal"},"status":{"name":"Complete"},"progress":{"completed_count":1,"total_count":1,"encounters":[{"completed_count":1,"encounter":{"name":"Degentrius"},"last_kill_timestamp":1790629465000}]}},
+					{"difficulty":{},"status":{"name":"Complete"},"progress":{"completed_count":1,"total_count":1}}]}]}]}`))
+		case r.URL.Path == "/profile/wow/character/lightbringer/mage/mythic-keystone-profile" && ns == "profile-us":
+			w.Write([]byte(`{"character":{"name":"Mage"},"current_period":{"best_runs":[{"dungeon":{"name":"The Blinding Vale"},"keystone_level":10,"duration":1802180,"is_completed_within_time":true,"map_rating":{"rating":300.04}}]}}`))
+		case r.URL.Path == "/profile/wow/character/lightbringer/mage/mythic-keystone-profile/season/18" && ns == "profile-us":
+			w.Write([]byte(`{"mythic_rating":{"rating":1234.56},"best_runs":[
+				{"completed_timestamp":1790458374000,"dungeon":{"name":"Low Run"},"keystone_level":5,"duration":1500000,"is_completed_within_time":true,"map_rating":{"rating":200},
+				 "keystone_affixes":[{"name":"Tyrannical"}],"members":[{"character":{"name":"Mage"},"specialization":{"name":"Arcane"},"equipped_item_level":250}]},
+				{"completed_timestamp":1790458374000,"dungeon":{"name":"High Run"},"keystone_level":12,"duration":1802180,"is_completed_within_time":false,"map_rating":{"rating":350}}]}`))
+		case r.URL.Path == "/data/wow/mythic-keystone/season/index" && ns == "dynamic-us":
+			w.Write([]byte(`{"current_season":{"id":18},"seasons":[{"id":17},{"id":18}]}`))
+		case r.URL.Path == "/data/wow/mythic-keystone/season/18" && ns == "dynamic-us":
+			w.Write([]byte(`{"id":18,"season_name":"Midnight Season 2","start_timestamp":1786460400000}`))
+		case r.URL.Path == "/data/wow/mythic-keystone/season/17" && ns == "dynamic-us":
+			w.Write([]byte(`{"id":17,"season_name":"Midnight Season 1"}`))
+		case r.URL.Path == "/profile/wow/character/lightbringer/mage/professions" && ns == "profile-us":
+			w.Write([]byte(`{"character":{"name":"Mage"},"primaries":[{"profession":{"id":197,"name":"Tailoring"},"tiers":[
+				{"tier":{"id":2540,"name":"Classic Tailoring"},"skill_points":300,"max_skill_points":300,"known_recipes":[{"id":1,"name":"Linen Bolt"}]},
+				{"tier":{"id":2918,"name":"Midnight Tailoring"},"skill_points":72,"max_skill_points":100,"known_recipes":[{"id":10,"name":"Bright Linen Bolt"},{"id":12,"name":"Courtly Helm"}]}]}],
+				"secondaries":[{"profession":{"id":794,"name":"Archaeology"},"skill_points":82}]}`))
+		case r.URL.Path == "/data/wow/profession/197/skill-tier/2918" && ns == "static-us":
+			w.Write([]byte(`{"categories":[
+				{"name":"Woven Cloth","recipes":[{"id":10,"name":"Bright Linen Bolt"},{"id":11,"name":"Arcanoweave Bolt"}]},
+				{"name":"Garments","recipes":[{"id":12,"name":"Courtly Helm"}]}]}`))
 		default:
 			http.NotFound(w, r)
 		}
