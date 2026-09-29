@@ -7,8 +7,10 @@
 // npm installs just the platform package matching the user's machine (via the
 // os/cpu fields), the same pattern esbuild and Biome use.
 //
-// Reads the binaries GoReleaser built (dist/artifacts.json).
-// Usage: node npm/build.mjs --version 0.5.0 [--dist dist] [--out npm/dist]
+// Binaries come from GoReleaser's dist/artifacts.json, or with --assets from a
+// folder of GitHub release downloads (wowapi-<tag>-<goos>-<goarch>[.exe]); the
+// latter is how the first npm version was bootstrapped (task npm:bootstrap).
+// Usage: node npm/build.mjs --version 0.5.0 [--dist dist | --assets dir] [--out npm/dist]
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -42,7 +44,7 @@ const targets = [
 
 const common = {
   version,
-  license: "UNLICENSED",
+  license: "MIT",
   homepage: "https://github.com/glholland/wowapi#readme",
   repository: { type: "git", url: "git+https://github.com/glholland/wowapi.git" },
 };
@@ -55,20 +57,31 @@ const write = (dir, file, data) => {
 fs.rmSync(outDir, { recursive: true, force: true });
 
 // GoReleaser records every binary it built in dist/artifacts.json.
-const artifactsFile = path.join(distDir, "artifacts.json");
-if (!fs.existsSync(artifactsFile)) {
-  console.error(`npm/build.mjs: ${artifactsFile} not found; run GoReleaser first (task release)`);
+const fail = (msg) => {
+  console.error(`npm/build.mjs: ${msg}`);
   process.exit(1);
-}
-const artifacts = JSON.parse(fs.readFileSync(artifactsFile, "utf8"));
-const binaryFor = (t) => {
-  const found = artifacts.find((a) => a.type === "Binary" && a.goos === t.goos && a.goarch === t.goarch);
-  if (!found) {
-    console.error(`npm/build.mjs: no ${t.goos}/${t.goarch} binary in ${artifactsFile}`);
-    process.exit(1);
-  }
-  return path.resolve(root, found.path);
 };
+
+let binaryFor;
+if (args.assets) {
+  const dir = path.resolve(root, args.assets);
+  const files = fs.readdirSync(dir);
+  binaryFor = (t) => {
+    const suffix = `-${t.goos}-${t.goarch}${t.goos === "windows" ? ".exe" : ""}`;
+    const matches = files.filter((f) => f.startsWith("wowapi-") && f.endsWith(suffix));
+    if (matches.length !== 1) fail(`expected one release asset ending in ${suffix} in ${dir}, found ${matches.length}`);
+    return path.join(dir, matches[0]);
+  };
+} else {
+  const artifactsFile = path.join(distDir, "artifacts.json");
+  if (!fs.existsSync(artifactsFile)) fail(`${artifactsFile} not found; run GoReleaser first (task release)`);
+  const artifacts = JSON.parse(fs.readFileSync(artifactsFile, "utf8"));
+  binaryFor = (t) => {
+    const found = artifacts.find((a) => a.type === "Binary" && a.goos === t.goos && a.goarch === t.goarch);
+    if (!found) fail(`no ${t.goos}/${t.goarch} binary in ${artifactsFile}`);
+    return path.resolve(root, found.path);
+  };
+}
 const optionalDependencies = {};
 
 for (const t of targets) {
@@ -84,9 +97,10 @@ for (const t of targets) {
     description: `The ${t.os}-${t.cpu} binary for wowapi. Install "wowapi" instead of this package.`,
     os: [t.os],
     cpu: [t.cpu],
-    files: ["bin"],
+    files: ["bin", "LICENSE"],
     preferUnplugged: true,
   });
+  fs.copyFileSync(path.join(root, "LICENSE"), path.join(dir, "LICENSE"));
   write(dir, "README.md", `# ${name}\n\nThe ${t.os}-${t.cpu} binary for [wowapi](https://www.npmjs.com/package/wowapi). Install \`wowapi\` instead.\n`);
   optionalDependencies[name] = version;
 }
@@ -96,13 +110,14 @@ fs.mkdirSync(path.join(main, "bin"), { recursive: true });
 fs.copyFileSync(path.join(here, "wowapi", "bin", "wowapi.js"), path.join(main, "bin", "wowapi.js"));
 fs.chmodSync(path.join(main, "bin", "wowapi.js"), 0o755);
 fs.copyFileSync(path.join(root, "README.md"), path.join(main, "README.md"));
+fs.copyFileSync(path.join(root, "LICENSE"), path.join(main, "LICENSE"));
 write(main, "package.json", {
   name: "wowapi",
   ...common,
   description: "World of Warcraft Battle.net API client and MCP server: characters, professions, recipes, talents and Auction House prices.",
   keywords: ["mcp", "mcp-server", "model-context-protocol", "world-of-warcraft", "wow", "battle.net", "blizzard"],
   bin: { wowapi: "bin/wowapi.js" },
-  files: ["bin", "README.md"],
+  files: ["bin", "README.md", "LICENSE"],
   engines: { node: ">=18" },
   optionalDependencies,
 });

@@ -12,6 +12,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  id-token: write # passed to release.yml for npm trusted publishing
 
 jobs:
   release-please:

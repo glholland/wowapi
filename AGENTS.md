@@ -113,6 +113,11 @@ Use Task rather than raw `go` commands:
   `.goreleaser.yaml` pick up; keep those paths in step. npm publishing stays
   outside GoReleaser (its npm support is Pro-only and uses a postinstall
   download instead of per-platform packages).
+- npm publishing uses trusted publishing (OIDC), not a token. npm checks the
+  *calling* workflow's filename, so each package trusts both
+  `release-please.yml` and `release.yml`, and both need `id-token: write`.
+  Renaming either workflow breaks publishing until npm's settings are updated.
+  It only works from a public repo; there is deliberately no token fallback.
 - Read configuration with `blizzard.Env`, not `os.Getenv`: MCP bundle clients
   can pass unfilled settings through literally (`${user_config.realm}`), and
   `Env` treats those as unset.

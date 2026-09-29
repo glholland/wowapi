@@ -84,6 +84,7 @@ const manifest = {
   homepage: "https://github.com/glholland/wowapi",
   support: "https://github.com/glholland/wowapi/issues",
   keywords: ["world of warcraft", "wow", "battle.net", "blizzard", "gaming"],
+  license: "MIT",
   privacy_policies: ["https://www.blizzard.com/privacy-policy"],
   compatibility: { platforms: [osName] },
   server: {
@@ -143,6 +144,7 @@ try {
   fs.copyFileSync(binary, path.join(dir, "server", exe));
   fs.chmodSync(path.join(dir, "server", exe), 0o755);
   fs.copyFileSync(path.join(root, "README.md"), path.join(dir, "README.md"));
+  fs.copyFileSync(path.join(root, "LICENSE"), path.join(dir, "LICENSE"));
   fs.writeFileSync(path.join(dir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
 
   const out = path.join(work, `wowapi-${version}-${osName}-${cpu}.mcpb`);

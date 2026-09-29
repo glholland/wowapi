@@ -17,13 +17,14 @@ on:
 
 permissions:
   contents: write # create or upload to the GitHub release
+  id-token: write # npm trusted publishing (OIDC): no npm token is stored
 
 jobs:
   release:
     runs-on: ubuntu-latest
     env:
       TAG: ${{ inputs.tag || github.ref_name }}
-      HAS_NPM_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
+      PRIVATE_REPO: ${{ github.event.repository.private }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -53,9 +54,9 @@ jobs:
       - name: Vulnerability scan
         run: task vuln
 
-      - uses: actions/setup-node@v7 # the MCP bundle hooks run node
+      - uses: actions/setup-node@v7 # MCP bundle hooks + npm publishing
         with:
-          node-version: 22
+          node-version: 24 # npm 11.5.1+ is required for trusted publishing
           registry-url: https://registry.npmjs.org
 
       # Builds every platform, packs an MCP bundle per platform, writes
@@ -73,12 +74,13 @@ jobs:
       - name: Build npm packages
         run: node npm/build.mjs --version "${TAG#v}"
 
+      # Trusted publishing: npm checks this run's GitHub identity (OIDC)
+      # against the publishers configured on each package (release-please.yml
+      # and release.yml). No npm token exists anywhere.
       - name: Publish to npm
-        if: env.HAS_NPM_TOKEN == 'true'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        if: env.PRIVATE_REPO != 'true'
         run: bash npm/publish.sh
 
       - name: npm publishing skipped
-        if: env.HAS_NPM_TOKEN != 'true'
-        run: echo "::warning::NPM_TOKEN secret is not set, so the npm packages were built but not published."
+        if: env.PRIVATE_REPO == 'true'
+        run: echo "::warning::npm trusted publishing needs a public repository, so the npm packages were built but not published."
