@@ -19,7 +19,7 @@ import (
 )
 
 // version is overridden at release build time with -ldflags "-X main.version=...".
-var version = "0.5.0"
+var version = "0.5.0" // x-release-please-version
 
 const usage = `wowapi - World of Warcraft Battle.net API client and MCP server
 

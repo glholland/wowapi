@@ -1,24 +1,33 @@
 name: Release
 
-# Push a version tag to release:
-#   git tag v0.5.0 && git push origin v0.5.0
+# Normally triggered by release-please (see release-please.yml) when its
+# release PR is merged. A tag can also be pushed by hand:
+#   git tag v0.5.1 && git push origin v0.5.1
 # Tags with a pre-release suffix (v0.6.0-rc.1) become GitHub pre-releases and
 # are published to npm under the "next" dist-tag instead of "latest".
 on:
   push:
     tags: ['v*']
+  workflow_call:
+    inputs:
+      tag:
+        description: The release tag to build, e.g. v0.6.0
+        required: true
+        type: string
 
 permissions:
-  contents: write # create the GitHub release
+  contents: write # create or upload to the GitHub release
 
 jobs:
   release:
     runs-on: ubuntu-latest
     env:
+      TAG: ${{ inputs.tag || github.ref_name }}
       HAS_NPM_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.tag || github.ref }}
           fetch-depth: 0 # git describe stamps the tag into the binaries
 
       - uses: actions/setup-go@v7
@@ -30,8 +39,8 @@ jobs:
 
       - name: Check the tag is a semver version
         run: |
-          if ! [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "::error::Tag $GITHUB_REF_NAME is not vMAJOR.MINOR.PATCH[-prerelease]"
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Tag $TAG is not vMAJOR.MINOR.PATCH[-prerelease]"
             exit 1
           fi
 
@@ -44,32 +53,25 @@ jobs:
       - name: Vulnerability scan
         run: task vuln
 
-      - name: Cross-compile
-        run: task release
-
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7 # the MCP bundle hooks run node
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
-      - name: MCP bundles for Claude Desktop
-        run: node mcpb/build.mjs --version "${GITHUB_REF_NAME#v}"
-
-      - name: Checksums
-        working-directory: dist
-        run: sha256sum wowapi-* > SHA256SUMS.txt && cat SHA256SUMS.txt
-
-      - name: Create GitHub release
+      # Builds every platform, packs an MCP bundle per platform, writes
+      # SHA256SUMS.txt and publishes the GitHub release. If release-please
+      # already created the release, its notes are kept and assets are added.
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          version: '~> v2'
+          args: release --clean
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          prerelease=""
-          [[ "$GITHUB_REF_NAME" == *-* ]] && prerelease="--prerelease"
-          gh release create "$GITHUB_REF_NAME" dist/* \
-            --title "wowapi $GITHUB_REF_NAME" --generate-notes --verify-tag $prerelease
+          GITHUB_TOKEN: ${{ github.token }}
+          GORELEASER_CURRENT_TAG: ${{ env.TAG }}
 
       - name: Build npm packages
-        run: node npm/build.mjs --version "${GITHUB_REF_NAME#v}"
+        run: node npm/build.mjs --version "${TAG#v}"
 
       - name: Publish to npm
         if: env.HAS_NPM_TOKEN == 'true'
