@@ -4,7 +4,62 @@ A command-line client for Blizzard's World of Warcraft API that doubles as an
 MCP server, so Claude (or any MCP-capable assistant) can look up your
 character, items, recipes and Auction House prices directly.
 
-## Getting Started
+## Install as an MCP server
+
+Get Battle.net API credentials first: create a client at
+<https://develop.battle.net/access/clients> (any name; the redirect URL can be
+`http://localhost`) and copy the client ID and secret.
+
+### With npm (any OS, needs Node.js 18+)
+
+```sh
+npm install -g wowapi        # or skip installing and use: npx -y wowapi
+```
+
+npm downloads only the prebuilt binary for your platform (Windows, macOS or
+Linux on x64/arm64). Then register it with your MCP client.
+
+**Claude Code:**
+
+```sh
+claude mcp add wowapi --scope user -e BLIZZARD_CLIENT_ID=... -e BLIZZARD_CLIENT_SECRET=... -e WOW_REALM=Lightbringer -e WOW_CHARACTER=Cëldis -- npx -y wowapi mcp
+```
+
+**Claude Desktop and other clients** (`claude_desktop_config.json` or equivalent):
+
+```json
+{
+  "mcpServers": {
+    "wowapi": {
+      "command": "npx",
+      "args": ["-y", "wowapi", "mcp"],
+      "env": {
+        "BLIZZARD_CLIENT_ID": "...",
+        "BLIZZARD_CLIENT_SECRET": "...",
+        "WOW_REGION": "us",
+        "WOW_REALM": "Lightbringer",
+        "WOW_CHARACTER": "Cëldis"
+      }
+    }
+  }
+}
+```
+
+With a global install you can use `"command": "wowapi", "args": ["mcp"]`
+instead of `npx`.
+
+### From a GitHub release (no Node.js)
+
+Each [release](https://github.com/glholland/wowapi/releases) has a standalone
+binary per platform plus `SHA256SUMS.txt`. Download the one for your machine,
+put it somewhere permanent, and point your MCP client at it with the argument
+`mcp`. With the GitHub CLI:
+
+```sh
+gh release download --repo glholland/wowapi --pattern "*windows-amd64.exe" --dir ~/bin
+```
+
+## Build from source
 
 You'll need [Go](https://go.dev/dl/) 1.26+ and [Task](https://taskfile.dev/installation/)
 (`winget install Task.Task`, `brew install go-task`, or `go install github.com/go-task/task/v3/cmd/task@latest`).
@@ -177,9 +232,30 @@ Ready-made starting points that tell the model which tools to use:
 | `task mcp:add` | Register the server with Claude Code using `.env` |
 | `task clean` | Remove build output, `dist/` and coverage files |
 
+| `task npm:pack` | Build the npm packages and tarballs into `npm/dist` (`NPM_VERSION=0.5.0`) |
+
 Linting and vulnerability tools run through `go run`, so there is nothing
 extra to install. Builds are versioned from `git describe`, so tag releases
 (`git tag v0.5.0`) to get clean version numbers.
+
+### Releasing
+
+Push a version tag and [the release workflow](.github/workflows/release.yml)
+does the rest:
+
+```sh
+git tag v0.5.0
+git push origin v0.5.0
+```
+
+It re-runs the checks, cross-compiles, creates a GitHub release with the
+binaries and checksums, and publishes to npm: one package per platform
+(`wowapi-win32-x64`, `wowapi-darwin-arm64`, ...) plus the `wowapi` launcher
+that depends on them. A tag like `v0.6.0-rc.1` becomes a pre-release and goes
+to npm's `next` tag. Publishing needs an `NPM_TOKEN` repository secret (an npm
+automation or granular access token); without it the packages are built but
+not published. [CI](.github/workflows/ci.yml) runs the same checks on every
+push and pull request.
 
 See [AGENTS.md](AGENTS.md) for notes aimed at AI coding assistants.
 

@@ -3,6 +3,7 @@
 /wowapi.exe
 /wowapi.exe~
 /dist/
+/npm/dist/
 coverage.out
 
 # Local secrets

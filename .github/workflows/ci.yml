@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # git describe needs tags for the version stamp
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install Task
+        run: go install github.com/go-task/task/v3/cmd/task@latest
+
+      - name: Format, vet and test
+        run: task check
+
+      - name: Lint
+        run: task lint
+
+      - name: Vulnerability scan
+        run: task vuln
+
+      - name: MCP server starts and lists its tools
+        run: task mcp:list
+
+      - name: Cross-compile and package for npm
+        run: |
+          task release
+          node npm/build.mjs --version 0.0.0-ci

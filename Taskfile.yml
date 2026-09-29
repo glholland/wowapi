@@ -77,6 +77,15 @@ tasks:
     cmds:
       - go build -trimpath -ldflags "{{.LDFLAGS}}" -o dist/wowapi-{{.VERSION}}-{{.GOOS}}-{{.GOARCH}}{{.EXT}} .
 
+  npm:pack:
+    desc: 'Build the npm packages from a fresh release build into npm/dist (e.g. task npm:pack NPM_VERSION=0.5.0)'
+    vars:
+      NPM_VERSION: '{{.NPM_VERSION | default "0.0.0-local"}}'
+    cmds:
+      - task: release
+      - node npm/build.mjs --version {{.NPM_VERSION}}
+      - cmd: cd npm/dist && for d in wowapi wowapi-*; do npm pack "./$d" --silent; done
+
   version:
     desc: Show the version builds will be stamped with, and the built binary's
     cmds:
@@ -88,7 +97,7 @@ tasks:
     desc: Remove build output, release artifacts and coverage files
     cmds:
       - go clean
-      - rm -rf {{.BIN}} dist coverage.out .task
+      - rm -rf {{.BIN}} dist npm/dist coverage.out .task
 
   # ---- Quality ---------------------------------------------------------------
 

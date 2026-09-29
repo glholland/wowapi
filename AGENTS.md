@@ -29,6 +29,10 @@ are in [README.md](README.md).
 | `blizzard/creation.go` | Character creation data: races, classes, specializations, talent trees |
 | `blizzard/*_test.go` | Tests against an `httptest` fake API — no network or credentials needed |
 | `Taskfile.yml` | All common commands ([taskfile.dev](https://taskfile.dev)) |
+| `npm/build.mjs` | Builds the npm launcher + per-platform packages from `dist/` |
+| `npm/wowapi/bin/wowapi.js` | npm launcher: finds the platform binary and runs it with inherited stdio |
+| `npm/publish.sh` | Publishes the npm packages (platform packages first; skips existing versions) |
+| `.github/workflows/` | `ci.yml` (checks on push/PR), `release.yml` (on `v*` tags: GitHub release + npm) |
 
 ## Commands
 
@@ -93,4 +97,9 @@ Use Task rather than raw `go` commands:
   startup otherwise. `task mcp:list` or the tests catch it.
 - The SDK validates structured output against its schema on every call, and
   does not enforce required prompt arguments; prompts check them by hand.
+- The npm launcher must keep stdio inherited and pass signals and exit codes
+  through; MCP clients talk to the Go binary over stdin/stdout. Test packaging
+  with `task npm:pack` and a global install into a temporary `--prefix`.
+- Release filenames (`dist/wowapi-<version>-<goos>-<goarch>`) are parsed by
+  `npm/build.mjs`; keep them in step if `task release` changes.
 - In Git Bash, `MSYS_NO_PATHCONV=1` is needed for `wowapi get /data/wow/...`.
