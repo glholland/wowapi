@@ -17,7 +17,7 @@ import (
 	"github.com/glholland/wowapi/blizzard"
 )
 
-const version = "0.2.0"
+const version = "0.3.0"
 
 const usage = `wowapi - World of Warcraft Battle.net API client and MCP server
 
@@ -26,8 +26,9 @@ Usage:
   wowapi encounters [-kind dungeons|raids] [-expansion E] [realm] [name]
                                                  dungeon or raid boss progress
   wowapi mythic [-season N] [realm] [name]       Mythic+ rating and best runs (default: current season)
-  wowapi recipes [-tier N] [-known] <profession> [realm] [name]
-                                                 known vs. missing recipes for a profession tier
+  wowapi recipes [-tier N] [-known] [-sources] <profession> [realm] [name]
+                                                 known vs. missing recipes for a profession tier;
+                                                 -sources adds boss drops, recipe items and AH prices
   wowapi search <item name>                      find item IDs by name
   wowapi item <id>                               item details
   wowapi profession [id [skill-tier-id]]         professions, skill tiers, recipes
@@ -78,6 +79,7 @@ func run() error {
 	season := fs.Int("season", 0, "mythic: season ID (0 = current)")
 	tier := fs.Int("tier", 0, "recipes: skill tier ID (0 = newest the character has)")
 	known := fs.Bool("known", false, "recipes: also list known recipes")
+	sources := fs.Bool("sources", false, "recipes: explain where each missing recipe comes from")
 	fs.Parse(args)
 	args = fs.Args()
 
@@ -126,10 +128,10 @@ func run() error {
 		return printJSON(c.MythicKeystoneSeason(ctx, realm, name, *season))
 	case "recipes":
 		if len(args) == 0 {
-			return fmt.Errorf("usage: wowapi recipes [-tier N] [-known] <profession> [realm] [name]")
+			return fmt.Errorf("usage: wowapi recipes [-tier N] [-known] [-sources] <profession> [realm] [name]")
 		}
 		realm, name := resolveCharacter(args[1:])
-		return printJSON(c.ProfessionRecipes(ctx, realm, name, args[0], *tier, *known))
+		return printJSON(c.ProfessionRecipes(ctx, realm, name, args[0], blizzard.RecipeOptions{TierID: *tier, IncludeKnown: *known, Sources: *sources}))
 	case "search":
 		if len(args) == 0 {
 			return fmt.Errorf("usage: wowapi search <item name>")

@@ -360,6 +360,7 @@ type RecipeProgress struct {
 	Missing    []RecipeCategory `json:"missing"`
 	KnownList  []RecipeCategory `json:"known_recipes,omitempty"`
 	OtherTiers []string         `json:"other_tiers,omitempty"`
+	SourceNote string           `json:"source_note,omitempty"`
 }
 
 // RecipeCategory is a recipe category with the recipes in it.
@@ -368,17 +369,24 @@ type RecipeCategory struct {
 	Recipes  []RecipeRef `json:"recipes"`
 }
 
-// RecipeRef is a recipe's ID and name.
+// RecipeRef is a recipe's ID and name, plus where to get it when requested.
 type RecipeRef struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID     int           `json:"id"`
+	Name   string        `json:"name"`
+	Source *RecipeSource `json:"source,omitempty"`
+}
+
+// RecipeOptions tunes ProfessionRecipes.
+type RecipeOptions struct {
+	TierID       int  // skill tier; 0 = the character's newest tier of the profession
+	IncludeKnown bool // also list known recipes by category
+	Sources      bool // explain where each missing recipe comes from (slower on first use)
 }
 
 // ProfessionRecipes reports which recipes of a profession tier a character
-// knows and which are missing. profession is a name ("tailoring") or numeric
-// ID; tierID 0 picks the character's newest tier of that profession.
-// includeKnown adds the known recipes grouped by category.
-func (c *Client) ProfessionRecipes(ctx context.Context, realm, name, profession string, tierID int, includeKnown bool) (RecipeProgress, error) {
+// knows and which are missing. profession is a name ("tailoring") or numeric ID.
+func (c *Client) ProfessionRecipes(ctx context.Context, realm, name, profession string, opt RecipeOptions) (RecipeProgress, error) {
+	tierID := opt.TierID
 	path, err := characterPath(realm, name, "/professions")
 	if err != nil {
 		return RecipeProgress{}, err
@@ -493,8 +501,13 @@ func (c *Client) ProfessionRecipes(ctx context.Context, realm, name, profession 
 		if len(miss) > 0 {
 			out.Missing = append(out.Missing, RecipeCategory{Category: cat.Name, Recipes: miss})
 		}
-		if includeKnown && len(got) > 0 {
+		if opt.IncludeKnown && len(got) > 0 {
 			out.KnownList = append(out.KnownList, RecipeCategory{Category: cat.Name, Recipes: got})
+		}
+	}
+	if opt.Sources && len(out.Missing) > 0 {
+		if out.SourceNote, err = c.recipeSources(ctx, realm, match.Profession.ID, match.Profession.Name, t.Tier.Name, out.Missing); err != nil {
+			return RecipeProgress{}, fmt.Errorf("recipe sources: %w", err)
 		}
 	}
 	return out, nil

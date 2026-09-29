@@ -83,7 +83,7 @@ func TestProfessionRecipes(t *testing.T) {
 	c, _ := fakeAPI(t)
 	ctx := context.Background()
 
-	p, err := c.ProfessionRecipes(ctx, "Lightbringer", "Mage", "tailoring", 0, false)
+	p, err := c.ProfessionRecipes(ctx, "Lightbringer", "Mage", "tailoring", RecipeOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,14 +97,60 @@ func TestProfessionRecipes(t *testing.T) {
 		t.Fatalf("known list should be omitted and other tiers listed: %+v", p)
 	}
 
-	byID, err := c.ProfessionRecipes(ctx, "Lightbringer", "Mage", "197", 2918, true)
+	byID, err := c.ProfessionRecipes(ctx, "Lightbringer", "Mage", "197", RecipeOptions{TierID: 2918, IncludeKnown: true})
 	if err != nil || len(byID.KnownList) != 2 {
 		t.Fatalf("lookup by ID with known recipes: %+v %v", byID, err)
 	}
-	if _, err := c.ProfessionRecipes(ctx, "Lightbringer", "Mage", "mining", 0, false); err == nil || !strings.Contains(err.Error(), "Tailoring") {
+	if _, err := c.ProfessionRecipes(ctx, "Lightbringer", "Mage", "mining", RecipeOptions{}); err == nil || !strings.Contains(err.Error(), "Tailoring") {
 		t.Errorf("unknown profession should list what the character has, got %v", err)
 	}
-	if _, err := c.ProfessionRecipes(ctx, "Lightbringer", "Mage", "tailoring", 9999, false); err == nil {
+	if _, err := c.ProfessionRecipes(ctx, "Lightbringer", "Mage", "tailoring", RecipeOptions{TierID: 9999}); err == nil {
 		t.Error("expected error for a tier the character lacks")
+	}
+}
+
+func TestProfessionRecipeSources(t *testing.T) {
+	c, _ := fakeAPI(t)
+	p, err := c.ProfessionRecipes(context.Background(), "Lightbringer", "Enchanter", "enchanting", RecipeOptions{Sources: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := map[string]*RecipeSource{}
+	for _, cat := range p.Missing {
+		for _, r := range cat.Recipes {
+			if r.Source == nil {
+				t.Fatalf("%s has no source", r.Name)
+			}
+			src[r.Name] = r.Source
+		}
+	}
+
+	a := src["Enchant Ring - A"]
+	if a.Type != "boss_drop" || len(a.DroppedBy) != 1 || a.DroppedBy[0] != "Degentrius (Magisters' Terrace)" {
+		t.Errorf("A should drop from Degentrius: %+v", a)
+	}
+	if !a.Tradable || a.AHListings != 2 || a.AHMinBuyout != "300g 00s 00c" || a.RequiresSkill != "Midnight Enchanting (50)" {
+		t.Errorf("A should be tradable with 2 listings from 300g: %+v", a)
+	}
+	if b := src["Enchant Ring - B"]; b.Type != "bind_on_pickup_item" || b.Tradable || b.TaughtBy == nil || b.TaughtBy.ID != 9002 {
+		t.Errorf("B should be a bind-on-pickup formula: %+v", b)
+	}
+	if s := src["Enchant Ring - C"]; s.Type != "no_item" || s.TaughtBy != nil {
+		t.Errorf("C has no teaching item: %+v", s)
+	}
+	if s := src["Old Recipe"]; s.Type != "no_item" {
+		t.Errorf("an item for another skill tier must not count: %+v", s)
+	}
+	if e := src["Enchant Ring - E"]; e.Type != "tradable_item" || e.AHListings != 0 || !strings.Contains(e.Summary, "None listed") {
+		t.Errorf("E should be tradable with no listings: %+v", e)
+	}
+	if !strings.Contains(p.SourceNote, "Midnight") {
+		t.Errorf("note should name the expansion checked: %q", p.SourceNote)
+	}
+
+	// Without the option, no sources and no extra API calls are needed.
+	plain, err := c.ProfessionRecipes(context.Background(), "Lightbringer", "Enchanter", "enchanting", RecipeOptions{})
+	if err != nil || plain.Missing[0].Recipes[0].Source != nil || plain.SourceNote != "" {
+		t.Errorf("sources should be opt-in: %+v %v", plain, err)
 	}
 }

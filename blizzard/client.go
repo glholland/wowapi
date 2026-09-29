@@ -38,6 +38,8 @@ type Client struct {
 	tokenExp     time.Time
 	cache        map[string]cacheEntry
 	commodityIdx *commodityIndex
+	dropIdx      map[int]map[int][]string  // journal expansion ID -> item ID -> "Boss (Instance)"
+	auctionIdx   map[int]realmAuctionIndex // connected realm ID -> listings
 }
 
 type cacheEntry struct {
@@ -67,6 +69,8 @@ func New(id, secret, region, locale string) *Client {
 		APIBase:      fmt.Sprintf("https://%s.api.blizzard.com", region),
 		HTTP:         &http.Client{Timeout: 60 * time.Second},
 		cache:        map[string]cacheEntry{},
+		dropIdx:      map[int]map[int][]string{},
+		auctionIdx:   map[int]realmAuctionIndex{},
 	}
 }
 

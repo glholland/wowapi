@@ -37,6 +37,7 @@ type recipeProgressArgs struct {
 	Profession   string `json:"profession" jsonschema:"Profession name (e.g. 'Tailoring') or ID (e.g. 197)."`
 	SkillTierID  int    `json:"skill_tier_id,omitempty" jsonschema:"Skill tier ID, e.g. 2918 for Midnight Tailoring. Omit for the newest tier the character has learned."`
 	IncludeKnown bool   `json:"include_known,omitempty" jsonschema:"Also list the known recipes by category. Default false (missing recipes only)."`
+	Sources      bool   `json:"sources,omitempty" jsonschema:"Explain where each missing recipe comes from: boss drops (dungeon/raid loot tables), the item that teaches it, whether that item is tradable, and its price on the character's realm Auction House. The first call per expansion takes a few seconds."`
 }
 
 type itemSearchArgs struct {
@@ -100,11 +101,11 @@ func runMCP(ctx context.Context, c *blizzard.Client) error {
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "wow_profession_recipes",
-		Description: "Compare the recipes a character knows with every recipe in a profession skill tier (defaults to the newest tier they have, e.g. Midnight Tailoring). Returns skill level, known/total counts and the missing recipes grouped by category. Use wow_recipe for a recipe's reagents.",
+		Description: "Compare the recipes a character knows with every recipe in a profession skill tier (defaults to the newest tier they have, e.g. Midnight Tailoring). Returns skill level, known/total counts and the missing recipes grouped by category. Set sources=true to learn where each missing recipe comes from (boss drop, tradable or bind-on-pickup recipe item with AH price, or trainer/specialization); Blizzard's API has no vendor or quest data. Use wow_recipe for a recipe's reagents.",
 		Annotations: readOnly,
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, a recipeProgressArgs) (*mcp.CallToolResult, any, error) {
 		realm, name := firstNonEmpty(a.Realm, os.Getenv("WOW_REALM")), firstNonEmpty(a.Name, os.Getenv("WOW_CHARACTER"))
-		return jsonResult(c.ProfessionRecipes(ctx, realm, name, a.Profession, a.SkillTierID, a.IncludeKnown))
+		return jsonResult(c.ProfessionRecipes(ctx, realm, name, a.Profession, blizzard.RecipeOptions{TierID: a.SkillTierID, IncludeKnown: a.IncludeKnown, Sources: a.Sources}))
 	})
 
 	mcp.AddTool(s, &mcp.Tool{

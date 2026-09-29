@@ -71,6 +71,7 @@ wowapi profession 197 <skill-tier-id>              # recipes for one expansion
 wowapi recipe <id>
 wowapi recipes tailoring                           # known vs. missing recipes (newest tier)
 wowapi recipes -tier 2918 -known tailoring Lightbringer Cëldis
+wowapi recipes -sources enchanting                 # ...plus where each missing recipe comes from
 wowapi encounters                                  # dungeon progress, every expansion
 wowapi encounters -kind raids -expansion midnight  # raid bosses, kill counts and dates
 wowapi mythic                                      # Mythic+ rating and best runs, current season
@@ -104,7 +105,7 @@ Tools (all read-only):
 | `wow_character` | Any profile section: summary, equipment, stats, professions, reputations, achievements, ... |
 | `wow_character_encounters` | Dungeon or raid progress per difficulty; filter by expansion for boss kills |
 | `wow_mythic_plus` | Mythic+ rating and best runs for a season, plus this week's runs |
-| `wow_profession_recipes` | Recipes a character knows vs. is missing in a profession tier |
+| `wow_profession_recipes` | Recipes a character knows vs. is missing in a profession tier; with `sources`, where to get each one |
 | `wow_item_search`, `wow_item` | Find items by name; item details |
 | `wow_profession`, `wow_recipe` | Profession tiers and recipe lists; a recipe's reagents |
 | `wow_commodity_price` | Region-wide Auction House price for stackable goods |
@@ -132,5 +133,10 @@ See [AGENTS.md](AGENTS.md) for notes aimed at AI coding assistants.
   `/data/wow/connected-realm/{id}/auctions` (find the ID via
   `/data/wow/realm/{slug}`); the response is several megabytes.
 - The API can't see your bags, bank or your own auctions.
+- Recipe sources (`-sources`) come from dungeon/raid loot tables and the items
+  that teach recipes, priced on your realm's Auction House. Blizzard's API has
+  no vendor, trainer, quest or specialization data, so those recipes are
+  labelled by elimination ("bind-on-pickup item" or "no item teaches this").
+  The first lookup per expansion takes a few seconds; results are cached.
 - In Git Bash, set `MSYS_NO_PATHCONV=1` before `wowapi get ...` so the API path
   isn't rewritten into a Windows path.

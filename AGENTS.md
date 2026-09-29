@@ -19,6 +19,7 @@ are in [README.md](README.md).
 | `blizzard/client.go` | OAuth client-credentials flow, HTTP, response cache |
 | `blizzard/wow.go` | Endpoint helpers (character, item, search, profession, recipe, commodities), `Slim`, `RealmSlug`, `FormatGold` |
 | `blizzard/progress.go` | Condensed character progress: dungeon/raid encounters, Mythic+ seasons, known vs. missing recipes |
+| `blizzard/sources.go` | Recipe sources: journal loot tables, recipe-item index, realm Auction House index |
 | `blizzard/*_test.go` | Tests against an `httptest` fake API — no network or credentials needed |
 | `Taskfile.yml` | All common commands ([taskfile.dev](https://taskfile.dev)) |
 
@@ -62,4 +63,7 @@ Use Task rather than raw `go` commands:
   character that's under level 10 or long inactive.
 - Commodity AH data is region-wide and cached 30 minutes; non-stackable items
   (gear, bags) are only in per-connected-realm auctions, which are multi-megabyte.
+- Recipe names repeat across expansions ("Arcanoweave Bracers" is in Outland
+  and Midnight Tailoring). Match teaching items by the skill tier they require,
+  not by name alone.
 - In Git Bash, `MSYS_NO_PATHCONV=1` is needed for `wowapi get /data/wow/...`.

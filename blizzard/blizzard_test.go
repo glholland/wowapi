@@ -76,6 +76,44 @@ func fakeAPI(t *testing.T) (*Client, *int32) {
 				{"item":{"id":100},"quantity":3,"unit_price":15000},
 				{"item":{"id":100},"quantity":2,"unit_price":15000},
 				{"item":{"id":200},"quantity":1,"unit_price":99}]}`))
+		case r.URL.Path == "/data/wow/search/item" && ns == "static-us" && r.URL.Query().Get("item_class.id") == "9":
+			if r.URL.Query().Get("item_subclass.id") != "8" {
+				w.Write([]byte(`{"pageCount":1,"results":[]}`))
+				return
+			}
+			w.Write([]byte(`{"pageCount":1,"results":[
+				{"data":{"id":9005,"name":{"en_US":"Formula: Enchant Ring - E"}}},
+				{"data":{"id":9004,"name":{"en_US":"Formula: Old Recipe"}}},
+				{"data":{"id":9002,"name":{"en_US":"Formula: Enchant Ring - B"}}},
+				{"data":{"id":9001,"name":{"en_US":"Formula: Enchant Ring - A"}}}]}`))
+		case strings.HasPrefix(r.URL.Path, "/data/wow/item/900") && ns == "static-us":
+			binding, skill := "ON_EQUIP", "Midnight Enchanting"
+			switch r.URL.Path {
+			case "/data/wow/item/9002":
+				binding = "ON_ACQUIRE"
+			case "/data/wow/item/9004":
+				binding, skill = "ON_ACQUIRE", "Outland Enchanting"
+			}
+			w.Write([]byte(`{"preview_item":{"binding":{"type":"` + binding + `"},"requirements":{"skill":{"display_string":"Requires ` + skill + ` (50)"}}}}`))
+		case r.URL.Path == "/profile/wow/character/lightbringer/enchanter/professions" && ns == "profile-us":
+			w.Write([]byte(`{"character":{"name":"Enchanter"},"primaries":[{"profession":{"id":333,"name":"Enchanting"},"tiers":[
+				{"tier":{"id":2909,"name":"Midnight Enchanting"},"skill_points":74,"max_skill_points":100,"known_recipes":[]}]}]}`))
+		case r.URL.Path == "/data/wow/profession/333/skill-tier/2909" && ns == "static-us":
+			w.Write([]byte(`{"categories":[{"name":"Ring Enchants","recipes":[
+				{"id":101,"name":"Enchant Ring - A"},{"id":102,"name":"Enchant Ring - B"},{"id":103,"name":"Enchant Ring - C"},
+				{"id":104,"name":"Old Recipe"},{"id":105,"name":"Enchant Ring - E"}]}]}`))
+		case r.URL.Path == "/data/wow/journal-expansion/index" && ns == "static-us":
+			w.Write([]byte(`{"tiers":[{"id":514,"name":"The War Within"},{"id":516,"name":"Midnight"}]}`))
+		case r.URL.Path == "/data/wow/journal-expansion/516" && ns == "static-us":
+			w.Write([]byte(`{"dungeons":[{"id":1300}],"raids":[]}`))
+		case r.URL.Path == "/data/wow/journal-instance/1300" && ns == "static-us":
+			w.Write([]byte(`{"name":"Magisters' Terrace","encounters":[{"id":2662}]}`))
+		case r.URL.Path == "/data/wow/journal-encounter/2662" && ns == "static-us":
+			w.Write([]byte(`{"name":"Degentrius","items":[{"item":{"id":9001}},{"item":{"id":7}}]}`))
+		case r.URL.Path == "/data/wow/realm/lightbringer" && ns == "dynamic-us":
+			w.Write([]byte(`{"connected_realm":{"href":"https://us.api.blizzard.com/data/wow/connected-realm/3694?namespace=dynamic-us"}}`))
+		case r.URL.Path == "/data/wow/connected-realm/3694/auctions" && ns == "dynamic-us":
+			w.Write([]byte(`{"auctions":[{"item":{"id":9001},"buyout":5000000},{"item":{"id":9001},"buyout":3000000},{"item":{"id":42},"buyout":1}]}`))
 		case r.URL.Path == "/data/wow/search/item" && ns == "static-us":
 			if r.URL.Query().Get("name.en_US") != "cloth" {
 				http.Error(w, "bad query", http.StatusBadRequest)
