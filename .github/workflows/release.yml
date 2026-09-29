@@ -47,6 +47,14 @@ jobs:
       - name: Cross-compile
         run: task release
 
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: MCP bundles for Claude Desktop
+        run: node mcpb/build.mjs --version "${GITHUB_REF_NAME#v}"
+
       - name: Checksums
         working-directory: dist
         run: sha256sum wowapi-* > SHA256SUMS.txt && cat SHA256SUMS.txt
@@ -59,11 +67,6 @@ jobs:
           [[ "$GITHUB_REF_NAME" == *-* ]] && prerelease="--prerelease"
           gh release create "$GITHUB_REF_NAME" dist/* \
             --title "wowapi $GITHUB_REF_NAME" --generate-notes --verify-tag $prerelease
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          registry-url: https://registry.npmjs.org
 
       - name: Build npm packages
         run: node npm/build.mjs --version "${GITHUB_REF_NAME#v}"

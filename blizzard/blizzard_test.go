@@ -221,3 +221,15 @@ func TestSearchItemsHandlesBothNameShapes(t *testing.T) {
 		t.Fatalf("unexpected hits: %+v", hits)
 	}
 }
+
+func TestEnvIgnoresPlaceholders(t *testing.T) {
+	t.Setenv("WOWAPI_TEST_A", "Lightbringer")
+	t.Setenv("WOWAPI_TEST_B", "${user_config.realm}")
+	t.Setenv("WOWAPI_TEST_C", "  ")
+	if Env("WOWAPI_TEST_A") != "Lightbringer" || Env("WOWAPI_TEST_B") != "" || Env("WOWAPI_TEST_C") != "" {
+		t.Errorf("got %q %q %q", Env("WOWAPI_TEST_A"), Env("WOWAPI_TEST_B"), Env("WOWAPI_TEST_C"))
+	}
+	if envOr("WOWAPI_TEST_B", "us") != "us" {
+		t.Error("a placeholder should fall back to the default")
+	}
+}

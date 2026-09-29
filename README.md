@@ -10,6 +10,23 @@ Get Battle.net API credentials first: create a client at
 <https://develop.battle.net/access/clients> (any name; the redirect URL can be
 `http://localhost`) and copy the client ID and secret.
 
+### Claude Desktop: one-click bundle
+
+Download the `.mcpb` file for your machine from the latest
+[release](https://github.com/glholland/wowapi/releases) and open it (or drag
+it onto Claude Desktop's Settings → Extensions):
+
+| Machine | File |
+|---|---|
+| Windows (most PCs) | `wowapi-<version>-win32-x64.mcpb` |
+| Windows on ARM | `wowapi-<version>-win32-arm64.mcpb` |
+| Mac with Apple silicon (M1 and later) | `wowapi-<version>-darwin-arm64.mcpb` |
+| Intel Mac | `wowapi-<version>-darwin-x64.mcpb` |
+
+Claude Desktop asks for your Battle.net client ID and secret (the secret is
+stored securely) and, optionally, your region, realm and main character. No
+Node.js or config files needed.
+
 ### With npm (any OS, needs Node.js 18+)
 
 ```sh
@@ -233,6 +250,7 @@ Ready-made starting points that tell the model which tools to use:
 | `task clean` | Remove build output, `dist/` and coverage files |
 
 | `task npm:pack` | Build the npm packages and tarballs into `npm/dist` (`NPM_VERSION=0.5.0`) |
+| `task mcpb:pack` | Build and validate the Claude Desktop bundles into `dist/` (`MCPB_VERSION=0.5.0`) |
 
 Linting and vulnerability tools run through `go run`, so there is nothing
 extra to install. Builds are versioned from `git describe`, so tag releases
@@ -248,8 +266,9 @@ git tag v0.5.0
 git push origin v0.5.0
 ```
 
-It re-runs the checks, cross-compiles, creates a GitHub release with the
-binaries and checksums, and publishes to npm: one package per platform
+It re-runs the checks, cross-compiles, builds a Claude Desktop bundle per
+platform, creates a GitHub release with the binaries, bundles and checksums,
+and publishes to npm: one package per platform
 (`wowapi-win32-x64`, `wowapi-darwin-arm64`, ...) plus the `wowapi` launcher
 that depends on them. A tag like `v0.6.0-rc.1` becomes a pre-release and goes
 to npm's `next` tag. Publishing needs an `NPM_TOKEN` repository secret (an npm

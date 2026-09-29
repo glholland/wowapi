@@ -42,7 +42,7 @@ Usage:
   wowapi price <item id>                         Auction House commodity price
   wowapi get <static|dynamic|profile> <path> [key=value ...]
                                                  any API endpoint
-  wowapi mcp [-list]                             run as an MCP server on stdio (-list: print its tools,
+  wowapi mcp [-list [-json]]                     run as an MCP server on stdio (-list: print its tools,
                                                  resources and prompts, then exit; no credentials needed)
   wowapi version
 
@@ -87,6 +87,7 @@ func run() error {
 	tier := fs.Int("tier", 0, "recipes: skill tier ID (0 = newest the character has)")
 	known := fs.Bool("known", false, "recipes: also list known recipes")
 	list := fs.Bool("list", false, "mcp: print tools, resources and prompts, then exit")
+	asJSON := fs.Bool("json", false, "mcp -list: print as JSON")
 	sources := fs.Bool("sources", false, "recipes: explain where each missing recipe comes from")
 	hero := fs.String("hero", "", "talents: only hero trees whose name contains this")
 	fs.Parse(args)
@@ -96,7 +97,7 @@ func run() error {
 	defer stop()
 	if cmd == "mcp" && *list {
 		// Listing never calls the API, so it works without credentials.
-		return mcpserver.Describe(ctx, mcpserver.New(blizzard.New("", "", "us", "en_US"), version), os.Stdout)
+		return mcpserver.Describe(ctx, mcpserver.New(blizzard.New("", "", "us", "en_US"), version), os.Stdout, *asJSON)
 	}
 	c, err := blizzard.NewFromEnv()
 	if err != nil {
@@ -216,7 +217,7 @@ func run() error {
 // resolveCharacter resolves [realm] [name] arguments, defaulting to WOW_REALM and
 // WOW_CHARACTER. An unquoted multi-word realm is everything but the last arg.
 func resolveCharacter(args []string) (realm, name string) {
-	realm, name = os.Getenv("WOW_REALM"), os.Getenv("WOW_CHARACTER")
+	realm, name = blizzard.Env("WOW_REALM"), blizzard.Env("WOW_CHARACTER")
 	switch len(args) {
 	case 0:
 	case 1:

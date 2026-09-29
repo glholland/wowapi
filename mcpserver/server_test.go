@@ -223,12 +223,31 @@ func TestPrompts(t *testing.T) {
 
 func TestDescribe(t *testing.T) {
 	var buf bytes.Buffer
-	if err := Describe(context.Background(), New(blizzard.New("", "", "us", "en_US"), "1.2.3"), &buf); err != nil {
+	if err := Describe(context.Background(), New(blizzard.New("", "", "us", "en_US"), "1.2.3"), &buf, false); err != nil {
 		t.Fatal(err)
 	}
 	for _, want := range []string{"wowapi 1.2.3", "Tools (13)", "Resources (7)", "Prompts (3)", "wow_talents                structured"} {
 		if !strings.Contains(buf.String(), want) {
 			t.Errorf("describe output missing %q:\n%s", want, buf.String())
+		}
+	}
+}
+
+func TestDescribeJSON(t *testing.T) {
+	var buf bytes.Buffer
+	if err := Describe(context.Background(), New(blizzard.New("", "", "us", "en_US"), "1.2.3"), &buf, true); err != nil {
+		t.Fatal(err)
+	}
+	var sum Summary
+	if err := json.Unmarshal(buf.Bytes(), &sum); err != nil {
+		t.Fatalf("not JSON: %v: %s", err, buf.String())
+	}
+	if sum.Version != "1.2.3" || len(sum.Tools) != 13 || len(sum.Resources) != 7 || len(sum.Prompts) != 3 {
+		t.Fatalf("unexpected summary: %+v", sum)
+	}
+	for _, p := range sum.Prompts {
+		if p.Name == "profession_plan" && (len(p.Required) != 1 || p.Required[0] != "profession") {
+			t.Errorf("profession_plan should require profession: %+v", p)
 		}
 	}
 }

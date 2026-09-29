@@ -50,7 +50,7 @@ type cacheEntry struct {
 // NewFromEnv builds a client from BLIZZARD_CLIENT_ID, BLIZZARD_CLIENT_SECRET,
 // WOW_REGION (default "us") and WOW_LOCALE (default "en_US").
 func NewFromEnv() (*Client, error) {
-	id, secret := os.Getenv("BLIZZARD_CLIENT_ID"), os.Getenv("BLIZZARD_CLIENT_SECRET")
+	id, secret := Env("BLIZZARD_CLIENT_ID"), Env("BLIZZARD_CLIENT_SECRET")
 	if id == "" || secret == "" {
 		return nil, fmt.Errorf("BLIZZARD_CLIENT_ID and BLIZZARD_CLIENT_SECRET must be set (create a client at https://develop.battle.net/access/clients)")
 	}
@@ -75,10 +75,21 @@ func New(id, secret, region, locale string) *Client {
 }
 
 func envOr(key, def string) string {
-	if v := os.Getenv(key); v != "" {
+	if v := Env(key); v != "" {
 		return v
 	}
 	return def
+}
+
+// Env reads an environment variable, treating an unsubstituted placeholder
+// such as "${user_config.realm}" as unset. MCP clients fill these in from
+// bundle settings and may pass them through verbatim when a setting is empty.
+func Env(key string) string {
+	v := strings.TrimSpace(os.Getenv(key))
+	if strings.HasPrefix(v, "${") && strings.HasSuffix(v, "}") {
+		return ""
+	}
+	return v
 }
 
 // APIError is returned for non-2xx responses from the API.

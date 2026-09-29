@@ -35,7 +35,12 @@ jobs:
       - name: MCP server starts and lists its tools
         run: task mcp:list
 
-      - name: Cross-compile and package for npm
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Cross-compile, then package for npm and MCPB (dry run)
         run: |
           task release
           node npm/build.mjs --version 0.0.0-ci
+          node mcpb/build.mjs --version 0.0.0-ci

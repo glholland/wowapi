@@ -6,7 +6,6 @@ package mcpserver
 
 import (
 	"context"
-	"os"
 
 	"github.com/glholland/wowapi/blizzard"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -40,10 +39,10 @@ func Run(ctx context.Context, c *blizzard.Client, version string) error {
 // defaultCharacter fills realm and name from WOW_REALM / WOW_CHARACTER.
 func defaultCharacter(realm, name string) (string, string) {
 	if realm == "" {
-		realm = os.Getenv("WOW_REALM")
+		realm = blizzard.Env("WOW_REALM")
 	}
 	if name == "" {
-		name = os.Getenv("WOW_CHARACTER")
+		name = blizzard.Env("WOW_CHARACTER")
 	}
 	return realm, name
 }

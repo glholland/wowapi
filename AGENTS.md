@@ -32,6 +32,7 @@ are in [README.md](README.md).
 | `npm/build.mjs` | Builds the npm launcher + per-platform packages from `dist/` |
 | `npm/wowapi/bin/wowapi.js` | npm launcher: finds the platform binary and runs it with inherited stdio |
 | `npm/publish.sh` | Publishes the npm packages (platform packages first; skips existing versions) |
+| `mcpb/build.mjs` | Builds and validates one Claude Desktop bundle (`.mcpb`) per platform; tool list comes from `wowapi mcp -list -json` |
 | `.github/workflows/` | `ci.yml` (checks on push/PR), `release.yml` (on `v*` tags: GitHub release + npm) |
 
 ## Commands
@@ -101,5 +102,8 @@ Use Task rather than raw `go` commands:
   through; MCP clients talk to the Go binary over stdin/stdout. Test packaging
   with `task npm:pack` and a global install into a temporary `--prefix`.
 - Release filenames (`dist/wowapi-<version>-<goos>-<goarch>`) are parsed by
-  `npm/build.mjs`; keep them in step if `task release` changes.
+  `npm/build.mjs` and `mcpb/build.mjs`; keep them in step if `task release` changes.
+- Read configuration with `blizzard.Env`, not `os.Getenv`: MCP bundle clients
+  can pass unfilled settings through literally (`${user_config.realm}`), and
+  `Env` treats those as unset.
 - In Git Bash, `MSYS_NO_PATHCONV=1` is needed for `wowapi get /data/wow/...`.

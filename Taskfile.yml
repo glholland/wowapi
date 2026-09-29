@@ -86,6 +86,14 @@ tasks:
       - node npm/build.mjs --version {{.NPM_VERSION}}
       - cmd: cd npm/dist && for d in wowapi wowapi-*; do npm pack "./$d" --silent; done
 
+  mcpb:pack:
+    desc: 'Build Claude Desktop MCP bundles (.mcpb) into dist/ from a fresh release build (e.g. task mcpb:pack MCPB_VERSION=0.5.0)'
+    vars:
+      MCPB_VERSION: '{{.MCPB_VERSION | default "0.0.0-local"}}'
+    cmds:
+      - task: release
+      - node mcpb/build.mjs --version {{.MCPB_VERSION}}
+
   version:
     desc: Show the version builds will be stamped with, and the built binary's
     cmds:
