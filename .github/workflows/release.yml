@@ -107,6 +107,19 @@ jobs:
         if: env.PRIVATE_REPO != 'true'
         run: bash npm/publish.sh
 
+      # npm reports a failed trusted-publishing exchange only as ENEEDAUTH; its
+      # debug log says why (wrong workflow filename, publisher limited to
+      # staging, package not linked, ...).
+      - name: npm debug log (publish failed)
+        if: failure() && env.PRIVATE_REPO != 'true'
+        run: |
+          shopt -s nullglob
+          for f in "$HOME"/.npm/_logs/*-debug-0.log; do
+            echo "::group::$f"
+            grep -iE "oidc|trusted|id.?token|provenance|sigstore|stage|authent|E40[0-9]|error" "$f" | grep -viE "bearer|_authToken" | tail -60
+            echo "::endgroup::"
+          done
+
       - name: npm publishing skipped
         if: env.PRIVATE_REPO == 'true'
         run: echo "::warning::npm trusted publishing needs a public repository, so the npm packages were built but not published."
