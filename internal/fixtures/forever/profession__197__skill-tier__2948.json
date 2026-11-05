@@ -1,0 +1,60 @@
+{
+ "id": 2948,
+ "name": "Tailoring",
+ "minimum_skill_level": 1,
+ "maximum_skill_level": 75,
+ "categories": [
+  {
+   "name": "Reagents",
+   "recipes": [
+    {
+     "key": {
+      "href": "https://us.api.blizzard.com/data/wow/recipe/2359?namespace=static-1.60.1_70399-forever-us"
+     },
+     "name": "Bolt of Linen Cloth",
+     "id": 2359
+    },
+    {
+     "key": {
+      "href": "https://us.api.blizzard.com/data/wow/recipe/2370?namespace=static-1.60.1_70399-forever-us"
+     },
+     "name": "Bolt of Woolen Cloth",
+     "id": 2370
+    },
+    {
+     "key": {
+      "href": "https://us.api.blizzard.com/data/wow/recipe/2376?namespace=static-1.60.1_70399-forever-us"
+     },
+     "name": "Bolt of Silk Cloth",
+     "id": 2376
+    }
+   ]
+  },
+  {
+   "name": "Cloaks",
+   "recipes": [
+    {
+     "key": {
+      "href": "https://us.api.blizzard.com/data/wow/recipe/2360?namespace=static-1.60.1_70399-forever-us"
+     },
+     "name": "Linen Cloak",
+     "id": 2360
+    },
+    {
+     "key": {
+      "href": "https://us.api.blizzard.com/data/wow/recipe/2367?namespace=static-1.60.1_70399-forever-us"
+     },
+     "name": "Reinforced Linen Cape",
+     "id": 2367
+    },
+    {
+     "key": {
+      "href": "https://us.api.blizzard.com/data/wow/recipe/2371?namespace=static-1.60.1_70399-forever-us"
+     },
+     "name": "Woolen Cape",
+     "id": 2371
+    }
+   ]
+  }
+ ]
+}

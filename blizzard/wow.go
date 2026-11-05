@@ -60,6 +60,9 @@ func RealmSlug(realm string) string {
 
 // Character fetches one section of a character's profile (see CharacterSections).
 func (c *Client) Character(ctx context.Context, realm, name, section string) ([]byte, error) {
+	if err := c.Game.Require(FeatureCharacters); err != nil {
+		return nil, err
+	}
 	if section == "" {
 		section = "summary"
 	}
@@ -67,11 +70,10 @@ func (c *Client) Character(ctx context.Context, realm, name, section string) ([]
 	if !ok {
 		return nil, fmt.Errorf("unknown section %q (valid: %s)", section, strings.Join(SectionNames(), ", "))
 	}
-	if realm == "" || name == "" {
-		return nil, fmt.Errorf("realm and character name are required")
+	path, err := characterPath(realm, name, suffix)
+	if err != nil {
+		return nil, err
 	}
-	path := fmt.Sprintf("/profile/wow/character/%s/%s%s",
-		url.PathEscape(RealmSlug(realm)), url.PathEscape(strings.ToLower(name)), suffix)
 	return c.Get(ctx, path, Profile, nil)
 }
 
@@ -185,6 +187,9 @@ type commodityIndex struct {
 // Blizzard refreshes the commodities snapshot roughly hourly and it is large
 // (tens of MB), so it is fetched at most every 30 minutes and indexed in memory.
 func (c *Client) Commodity(ctx context.Context, itemID int) (CommodityPrice, error) {
+	if err := c.Game.Require(FeatureCommodities); err != nil {
+		return CommodityPrice{}, err
+	}
 	idx, err := c.commodities(ctx)
 	if err != nil {
 		return CommodityPrice{}, err

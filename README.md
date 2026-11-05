@@ -125,6 +125,7 @@ Set these in `.env` or as real environment variables (which take precedence).
 | Variable | Required | Meaning |
 |---|---|---|
 | `BLIZZARD_CLIENT_ID` / `BLIZZARD_CLIENT_SECRET` | yes | API credentials |
+| `WOW_GAME` | no | `retail` (default) or `forever` ([World of Warcraft: Forever](#world-of-warcraft-forever)) |
 | `WOW_REGION` | no | `us` (default), `eu`, `kr`, `tw` |
 | `WOW_LOCALE` | no | `en_US` (default) |
 | `WOW_REALM` / `WOW_CHARACTER` | no | default character for lookups |
@@ -158,7 +159,14 @@ wowapi talents Death Knight Frost                  # class first when the spec n
 wowapi price <item id>                             # AH commodity price
 wowapi get static /data/wow/playable-specialization/64
 wowapi get dynamic /data/wow/realm/lightbringer
+wowapi get static-forever-us /data/wow/playable-race/95   # a full namespace is used as-is
 ```
+
+`get` takes a kind (`static`, `dynamic`, `profile`), which resolves to the
+namespace of the configured `WOW_GAME`, or a full namespace such as
+`static-forever-us` or `static-classicann-us`. Blizzard answers **403** for a
+namespace it doesn't recognize and **404** for data it doesn't have, so a 404
+in a real namespace means that endpoint isn't populated yet.
 
 Character sections: achievements, completed_quests, equipment, media,
 mounts, mythic_keystone, pets, professions, pvp, quests, reputations,
@@ -225,6 +233,38 @@ Ready-made starting points that tell the model which tools to use:
 | `new_character` | goal, faction, preferences | Recommend a race, class, spec, hero tree and first talents |
 | `character_review` | realm, name | Review gear, progress and professions; suggest next steps |
 | `profession_plan` | profession (required), realm, name | Level a profession and collect missing recipes, with AH prices |
+
+## World of Warcraft: Forever
+
+Set `WOW_GAME=forever` (also a setting in the Claude Desktop bundle) to query
+[World of Warcraft: Forever](https://worldofwarcraft.blizzard.com/) instead of
+retail. Forever has its own API namespaces (`static-forever-us`, ...), found
+by probing the live API on 2026-11-05, the day after launch.
+
+| Works | Not available yet, so not offered |
+|---|---|
+| `races`, `classes`, `talents`: 10 races (the new Skyborne are two races, High Order for the Alliance and Windshaper for the Horde, with different class lists), 9 classes, 27 original-style talent trees | **Characters** (`character`, `encounters`, `recipes`): every lookup returns 404 and no Forever realms are published |
+| `search`, `item`, `profession`, `recipe`: items, one Tailoring-style skill tier per profession, recipes | **Mythic+** (`mythic`): Forever has none |
+| `get` / `wow_api_get`, `mcp` | **Auction House** (`price`): no commodity endpoint, and no realms to list auctions for |
+| `wow://races`, `wow://classes`, `wow://race/..`, `wow://class/..`, `wow://talents/..` resources and the `new_character` prompt | Class, hero and PvP talents (`talents -section class\|hero\|pvp`): Forever has one tree per specialization. Recipe sources: the dungeon journal is empty. |
+
+Under `WOW_GAME=forever` the MCP server registers only the tools, resources
+and prompts in the left column (8 tools, 5 resources, 1 prompt; `task
+mcp:list:forever` prints them), and a CLI command from the right column fails
+with an explanation instead of a raw 404. The Forever `new_character` prompt
+plans around races, classes and talent trees only.
+
+Differences in the data: Forever's specialization records carry no role or
+primary stat, and a talent tree has only that specialization's talents, with
+several ranks each (no point-spending gates are published).
+
+Still blocked on Blizzard: character lookups (their realm slugs and the
+first-name-plus-surname path format aren't documented; `characterPath` in
+`blizzard/progress.go` has the TODO), realm and auction data, and the journal.
+`wowapi get static-forever-us ...` and `wow_api_get` still reach anything the
+API does serve, so new endpoints can be tried without code changes. Adding a
+Classic flavor (`classic`, `classic1x`, `classicann` namespaces exist) is one
+entry in `blizzard/game.go`.
 
 ## Development
 

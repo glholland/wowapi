@@ -14,7 +14,8 @@ import (
 	"time"
 )
 
-// Namespace kinds used by the WoW APIs. The region suffix is added by the client.
+// Namespace kinds used by the WoW APIs. The client turns a kind into the
+// configured game's namespace for its region (Game.Namespace).
 const (
 	Static  = "static"  // game data that changes with patches (items, recipes, talents)
 	Dynamic = "dynamic" // game data that changes often (auctions, realms, tokens)
@@ -27,6 +28,7 @@ type Client struct {
 	ClientSecret string
 	Region       string // us, eu, kr, tw
 	Locale       string // en_US, en_GB, de_DE, ...
+	Game         Game   // which WoW game's namespaces to use; the zero value is Retail
 
 	// Overridable for tests.
 	TokenURL string
@@ -48,23 +50,36 @@ type cacheEntry struct {
 }
 
 // NewFromEnv builds a client from BLIZZARD_CLIENT_ID, BLIZZARD_CLIENT_SECRET,
-// WOW_REGION (default "us") and WOW_LOCALE (default "en_US").
+// WOW_REGION (default "us"), WOW_LOCALE (default "en_US") and WOW_GAME
+// (default "retail"; see ParseGame).
 func NewFromEnv() (*Client, error) {
+	game, err := GameFromEnv()
+	if err != nil {
+		return nil, err
+	}
 	id, secret := Env("BLIZZARD_CLIENT_ID"), Env("BLIZZARD_CLIENT_SECRET")
 	if id == "" || secret == "" {
 		return nil, fmt.Errorf("BLIZZARD_CLIENT_ID and BLIZZARD_CLIENT_SECRET must be set (create a client at https://develop.battle.net/access/clients)")
 	}
-	return New(id, secret, envOr("WOW_REGION", "us"), envOr("WOW_LOCALE", "en_US")), nil
+	return New(id, secret, envOr("WOW_REGION", "us"), envOr("WOW_LOCALE", "en_US"), WithGame(game)), nil
 }
 
-// New builds a client for the given region and locale.
-func New(id, secret, region, locale string) *Client {
+// Option customizes a Client built by New.
+type Option func(*Client)
+
+// WithGame points the client at a game other than retail.
+func WithGame(g Game) Option { return func(c *Client) { c.Game = g } }
+
+// New builds a client for the given region and locale (retail unless
+// WithGame says otherwise).
+func New(id, secret, region, locale string, opts ...Option) *Client {
 	region = strings.ToLower(region)
-	return &Client{
+	c := &Client{
 		ClientID:     id,
 		ClientSecret: secret,
 		Region:       region,
 		Locale:       locale,
+		Game:         Retail,
 		TokenURL:     "https://oauth.battle.net/token",
 		APIBase:      fmt.Sprintf("https://%s.api.blizzard.com", region),
 		HTTP:         &http.Client{Timeout: 60 * time.Second},
@@ -72,6 +87,10 @@ func New(id, secret, region, locale string) *Client {
 		dropIdx:      map[int]map[int][]string{},
 		auctionIdx:   map[int]realmAuctionIndex{},
 	}
+	for _, opt := range opts {
+		opt(c)
+	}
+	return c
 }
 
 func envOr(key, def string) string {
@@ -94,15 +113,21 @@ func Env(key string) string {
 
 // APIError is returned for non-2xx responses from the API.
 type APIError struct {
-	Status int
-	Path   string
-	Body   string
+	Status    int
+	Path      string
+	Namespace string // the namespace the request used, e.g. "static-forever-us"
+	Body      string
 }
 
 func (e *APIError) Error() string {
 	msg := fmt.Sprintf("battle.net %s: HTTP %d", e.Path, e.Status)
-	if e.Status == http.StatusNotFound && strings.HasPrefix(e.Path, "/profile/") {
+	switch {
+	case e.Status == http.StatusNotFound && strings.HasPrefix(e.Path, "/profile/") && isForeverNamespace(e.Namespace):
+		msg += " (WoW: Forever character lookups are not served by Blizzard's API yet, and its realm slugs and name format are not published)"
+	case e.Status == http.StatusNotFound && strings.HasPrefix(e.Path, "/profile/"):
 		msg += " (character not found: check realm/name spelling, and note characters below level 10 or inactive for a long time are not exposed)"
+	case e.Status == http.StatusForbidden && e.Namespace != "":
+		msg += fmt.Sprintf(" (unless this is a user-scoped endpoint, Blizzard does not recognize the namespace %q: unknown namespaces return 403, while a known namespace without the data returns 404)", e.Namespace)
 	}
 	if e.Body != "" {
 		msg += ": " + truncate(e.Body, 300)
@@ -145,8 +170,10 @@ func (c *Client) accessToken(ctx context.Context) (string, error) {
 	return c.token, nil
 }
 
-// Get fetches an API path (e.g. "/data/wow/item/19019") in the given namespace
-// kind (Static, Dynamic or Profile) and returns the raw JSON body.
+// Get fetches an API path (e.g. "/data/wow/item/19019") and returns the raw
+// JSON body. namespace is a kind (Static, Dynamic or Profile), resolved to the
+// configured game's namespace, or a full namespace string such as
+// "static-classicann-us", which is used as-is (see ValidNamespace).
 func (c *Client) Get(ctx context.Context, path, namespace string, query url.Values) ([]byte, error) {
 	return c.get(ctx, path, namespace, query, 0)
 }
@@ -160,7 +187,7 @@ func (c *Client) get(ctx context.Context, path, namespace string, query url.Valu
 		query.Set("locale", c.Locale)
 	}
 	u := c.APIBase + path + "?" + query.Encode()
-	ns := namespace + "-" + c.Region
+	ns := c.resolveNamespace(namespace)
 
 	if ttl > 0 {
 		c.mu.Lock()
@@ -197,7 +224,7 @@ func (c *Client) get(ctx context.Context, path, namespace string, query url.Valu
 		c.mu.Unlock()
 	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, &APIError{Status: resp.StatusCode, Path: path, Body: string(body)}
+		return nil, &APIError{Status: resp.StatusCode, Path: path, Namespace: ns, Body: string(body)}
 	}
 	if ttl > 0 {
 		c.mu.Lock()
