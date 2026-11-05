@@ -1,0 +1,30 @@
+{
+ "id": 256,
+ "playable_class": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/playable-class/1?namespace=static-1.60.1_70399-forever-us"
+  },
+  "name": "Warrior",
+  "id": 1
+ },
+ "name": "Fury",
+ "media": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/media/playable-specialization/256?namespace=static-1.60.1_70399-forever-us"
+  },
+  "id": 256
+ },
+ "spec_talent_tree": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/talent-tree/1117/playable-specialization/256?namespace=static-1.60.1_70399-forever-us"
+  },
+  "name": "Fury"
+ },
+ "power_type": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/power-type/1?namespace=static-1.60.1_70399-forever-us"
+  },
+  "name": "Rage",
+  "id": 1
+ }
+}

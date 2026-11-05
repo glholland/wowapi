@@ -1,0 +1,658 @@
+{
+ "id": 1082,
+ "playable_class": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/playable-class/7?namespace=static-1.60.1_70399-forever-us"
+  },
+  "name": "Shaman",
+  "id": 7
+ },
+ "playable_specialization": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/playable-specialization/375?namespace=static-1.60.1_70399-forever-us"
+  },
+  "name": "Elemental Combat",
+  "id": 375
+ },
+ "name": "Elemental Combat",
+ "media": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/media/talent-tree/1082/playable-specialization/375?namespace=static-1.60.1_70399-forever-us"
+  }
+ },
+ "spec_talent_nodes": [
+  {
+   "id": 104773,
+   "node_type": {
+    "id": 0,
+    "type": "ACTIVE"
+   },
+   "ranks": [
+    {
+     "rank": 1,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134234?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Convection",
+       "id": 134234
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16039?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Convection",
+        "id": 16039
+       },
+       "description": "Reduces the mana cost of your Shock, Lightning Bolt, and Chain Lightning spells by 2%.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 2,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134234?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Convection",
+       "id": 134234
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16039?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Convection",
+        "id": 16039
+       },
+       "description": "Reduces the mana cost of your Shock, Lightning Bolt, and Chain Lightning spells by 4%.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 3,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134234?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Convection",
+       "id": 134234
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16039?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Convection",
+        "id": 16039
+       },
+       "description": "Reduces the mana cost of your Shock, Lightning Bolt, and Chain Lightning spells by 6%.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 4,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134234?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Convection",
+       "id": 134234
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16039?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Convection",
+        "id": 16039
+       },
+       "description": "Reduces the mana cost of your Shock, Lightning Bolt, and Chain Lightning spells by 8%.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 5,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134234?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Convection",
+       "id": 134234
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16039?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Convection",
+        "id": 16039
+       },
+       "description": "Reduces the mana cost of your Shock, Lightning Bolt, and Chain Lightning spells by 10%.",
+       "cast_time": "Passive"
+      }
+     }
+    }
+   ],
+   "display_row": 1,
+   "display_col": 2,
+   "raw_position_x": 1620,
+   "raw_position_y": 2130
+  },
+  {
+   "id": 104772,
+   "node_type": {
+    "id": 0,
+    "type": "ACTIVE"
+   },
+   "ranks": [
+    {
+     "rank": 1,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134233?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Concussion",
+       "id": 134233
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16035?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Concussion",
+        "id": 16035
+       },
+       "description": "Increases the damage done by your Lightning Bolt, Chain Lightning, and Earth Shock spells by 1%.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 2,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134233?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Concussion",
+       "id": 134233
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16035?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Concussion",
+        "id": 16035
+       },
+       "description": "Increases the damage done by your Lightning Bolt, Chain Lightning, and Earth Shock spells by 2%.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 3,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134233?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Concussion",
+       "id": 134233
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16035?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Concussion",
+        "id": 16035
+       },
+       "description": "Increases the damage done by your Lightning Bolt, Chain Lightning, and Earth Shock spells by 3%.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 4,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134233?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Concussion",
+       "id": 134233
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16035?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Concussion",
+        "id": 16035
+       },
+       "description": "Increases the damage done by your Lightning Bolt, Chain Lightning, and Earth Shock spells by 4%.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 5,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134233?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Concussion",
+       "id": 134233
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16035?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Concussion",
+        "id": 16035
+       },
+       "description": "Increases the damage done by your Lightning Bolt, Chain Lightning, and Earth Shock spells by 5%.",
+       "cast_time": "Passive"
+      }
+     }
+    }
+   ],
+   "display_row": 1,
+   "display_col": 3,
+   "raw_position_x": 2220,
+   "raw_position_y": 2130
+  },
+  {
+   "id": 104769,
+   "node_type": {
+    "id": 0,
+    "type": "ACTIVE"
+   },
+   "ranks": [
+    {
+     "rank": 1,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134230?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Elemental Devastation",
+       "id": 134230
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/30160?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Elemental Devastation",
+        "id": 30160
+       },
+       "description": "Your Critical Strikes with direct damage spells increase your chance to get a Critical Strike with melee attacks by 3% for 10 sec.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 2,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134230?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Elemental Devastation",
+       "id": 134230
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/30160?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Elemental Devastation",
+        "id": 30160
+       },
+       "description": "Your Critical Strikes with direct damage spells increase your chance to get a Critical Strike with melee attacks by 6% for 10 sec.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 3,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134230?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Elemental Devastation",
+       "id": 134230
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/30160?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Elemental Devastation",
+        "id": 30160
+       },
+       "description": "Your Critical Strikes with direct damage spells increase your chance to get a Critical Strike with melee attacks by 9% for 10 sec.",
+       "cast_time": "Passive"
+      }
+     }
+    }
+   ],
+   "display_row": 2,
+   "display_col": 1,
+   "raw_position_x": 1020,
+   "raw_position_y": 2730
+  },
+  {
+   "id": 104767,
+   "node_type": {
+    "id": 0,
+    "type": "ACTIVE"
+   },
+   "ranks": [
+    {
+     "rank": 1,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134228?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Reverberation",
+       "id": 134228
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16040?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Reverberation",
+        "id": 16040
+       },
+       "description": "Reduces the cooldown of your Shock spells by 0.2 sec.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 2,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134228?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Reverberation",
+       "id": 134228
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16040?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Reverberation",
+        "id": 16040
+       },
+       "description": "Reduces the cooldown of your Shock spells by 0.4 sec.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 3,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134228?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Reverberation",
+       "id": 134228
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16040?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Reverberation",
+        "id": 16040
+       },
+       "description": "Reduces the cooldown of your Shock spells by 0.6 sec.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 4,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134228?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Reverberation",
+       "id": 134228
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16040?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Reverberation",
+        "id": 16040
+       },
+       "description": "Reduces the cooldown of your Shock spells by 0.8 sec.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 5,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134228?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Reverberation",
+       "id": 134228
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16040?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Reverberation",
+        "id": 16040
+       },
+       "description": "Reduces the cooldown of your Shock spells by 1.0 sec.",
+       "cast_time": "Passive"
+      }
+     }
+    }
+   ],
+   "display_row": 2,
+   "display_col": 2,
+   "raw_position_x": 1620,
+   "raw_position_y": 2730
+  },
+  {
+   "id": 104771,
+   "unlocks": [
+    104759
+   ],
+   "node_type": {
+    "id": 0,
+    "type": "ACTIVE"
+   },
+   "ranks": [
+    {
+     "rank": 1,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134232?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Elemental Alacrity",
+       "id": 134232
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16578?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Elemental Alacrity",
+        "id": 16578
+       },
+       "description": "Reduces the cast time of your Lightning Bolt and Chain Lightning spells by 0.17 sec.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 2,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134232?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Elemental Alacrity",
+       "id": 134232
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16578?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Elemental Alacrity",
+        "id": 16578
+       },
+       "description": "Reduces the cast time of your Lightning Bolt and Chain Lightning spells by 0.33 sec.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 3,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134232?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Elemental Alacrity",
+       "id": 134232
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16578?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Elemental Alacrity",
+        "id": 16578
+       },
+       "description": "Reduces the cast time of your Lightning Bolt and Chain Lightning spells by 0.50 sec.",
+       "cast_time": "Passive"
+      }
+     }
+    }
+   ],
+   "display_row": 2,
+   "display_col": 3,
+   "raw_position_x": 2220,
+   "raw_position_y": 2730
+  },
+  {
+   "id": 104770,
+   "node_type": {
+    "id": 0,
+    "type": "ACTIVE"
+   },
+   "ranks": [
+    {
+     "rank": 1,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134231?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Call of Flame",
+       "id": 134231
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16038?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Call of Flame",
+        "id": 16038
+       },
+       "description": "Increases the damage done by your Fire Totems and by your Flame Shock and Fire Nova spells by 5%, as well as increases the duration of your Flame Shock spell by 3 sec.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 2,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134231?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Call of Flame",
+       "id": 134231
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16038?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Call of Flame",
+        "id": 16038
+       },
+       "description": "Increases the damage done by your Fire Totems and by your Flame Shock and Fire Nova spells by 10%, as well as increases the duration of your Flame Shock spell by 6 sec.",
+       "cast_time": "Passive"
+      }
+     }
+    },
+    {
+     "rank": 3,
+     "tooltip": {
+      "talent": {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/talent/134231?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Call of Flame",
+       "id": 134231
+      },
+      "spell_tooltip": {
+       "spell": {
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/16038?namespace=static-1.60.1_70399-forever-us"
+        },
+        "name": "Call of Flame",
+        "id": 16038
+       },
+       "description": "Increases the damage done by your Fire Totems and by your Flame Shock and Fire Nova spells by 15%, as well as increases the duration of your Flame Shock spell by 9 sec.",
+       "cast_time": "Passive"
+      }
+     }
+    }
+   ],
+   "display_row": 2,
+   "display_col": 4,
+   "raw_position_x": 2820,
+   "raw_position_y": 2730
+  }
+ ]
+}

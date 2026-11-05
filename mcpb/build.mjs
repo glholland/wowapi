@@ -37,7 +37,13 @@ const fail = (msg) => {
 if (argv.includes("--prepare")) {
   fs.rmSync(work, { recursive: true, force: true });
   fs.mkdirSync(work, { recursive: true });
-  const summary = execFileSync("go", ["run", ".", "mcp", "-list", "-json"], { cwd: root, encoding: "utf8" });
+  // The manifest declares the full (retail) tool list: pin WOW_GAME so a developer's own
+  // setting can't shrink what every bundle advertises. Forever offers a subset at runtime.
+  const summary = execFileSync("go", ["run", ".", "mcp", "-list", "-json"], {
+    cwd: root,
+    encoding: "utf8",
+    env: { ...process.env, WOW_GAME: "retail" },
+  });
   fs.writeFileSync(summaryFile, summary);
   // Install the CLI once so the parallel per-target hooks don't race npx.
   execFileSync("npm", ["install", "--no-save", "--no-audit", "--no-fund", "--prefix", cliDir, MCPB_CLI], {
@@ -70,6 +76,8 @@ const longDescription = `Read-only access to Blizzard's official World of Warcra
 - **New characters:** races, classes, specializations and full talent trees
 - **Prices:** region-wide commodity prices on the Auction House
 
+Set **Game** to forever for World of Warcraft: Forever. Blizzard's API does not serve Forever character profiles, Mythic+ or Auction House data yet, so that mode offers races, classes, talent trees, items and professions only.
+
 Needs a free Battle.net API client: create one at https://develop.battle.net/access/clients. Character data reflects each character's last logout.`;
 
 const manifest = {
@@ -77,7 +85,7 @@ const manifest = {
   name: "wowapi",
   display_name: "World of Warcraft (wowapi)",
   version,
-  description: "Look up World of Warcraft characters, professions, recipes, talents and Auction House prices from Blizzard's API.",
+  description: "Look up World of Warcraft (and WoW: Forever) characters, professions, recipes, races, classes, talents and Auction House prices from Blizzard's API.",
   long_description: longDescription,
   author: { name: "Garrett Holland", url: "https://github.com/glholland" },
   repository: { type: "git", url: "https://github.com/glholland/wowapi.git" },
@@ -96,6 +104,7 @@ const manifest = {
       env: {
         BLIZZARD_CLIENT_ID: "${user_config.client_id}",
         BLIZZARD_CLIENT_SECRET: "${user_config.client_secret}",
+        WOW_GAME: "${user_config.game}",
         WOW_REGION: "${user_config.region}",
         WOW_REALM: "${user_config.realm}",
         WOW_CHARACTER: "${user_config.character}",
@@ -118,6 +127,12 @@ const manifest = {
       description: "The secret for the same API client. Stored securely.",
       sensitive: true,
       required: true,
+    },
+    game: {
+      type: "string",
+      title: "Game",
+      description: "retail (World of Warcraft) or forever (World of Warcraft: Forever)",
+      default: "retail",
     },
     region: { type: "string", title: "Region", description: "us, eu, kr or tw", default: "us" },
     realm: {

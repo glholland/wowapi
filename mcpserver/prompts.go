@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/glholland/wowapi/blizzard"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -15,8 +16,28 @@ type promptDef struct {
 	build  func(args map[string]string) string
 }
 
-var prompts = []promptDef{
-	{
+// promptsFor returns the prompts a game can serve. The character prompts need
+// character lookups, which not every game's API provides.
+func promptsFor(g blizzard.Game) []promptDef {
+	defs := []promptDef{newCharacterPrompt(g)}
+	if g.Supports(blizzard.FeatureCharacters) {
+		defs = append(defs, characterPrompts...)
+	}
+	return defs
+}
+
+// newCharacterPrompt plans a new character. Retail has hero talent trees and
+// Mythic+; original-style games like WoW: Forever have neither, so their
+// prompt leaves them out.
+func newCharacterPrompt(g blizzard.Game) promptDef {
+	if g.Supports(blizzard.FeatureTalentExtras) {
+		return retailNewCharacter()
+	}
+	return originalStyleNewCharacter(g)
+}
+
+func retailNewCharacter() promptDef {
+	return promptDef{
 		prompt: &mcp.Prompt{
 			Name:        "new_character",
 			Title:       "Plan a new character",
@@ -42,7 +63,43 @@ var prompts = []promptDef{
 Finish with: the recommended race, class, specialization and hero tree; why they fit; one or two alternatives; and the first talents to prioritize. Say where a choice is personal taste rather than power.`)
 			return b.String()
 		},
-	},
+	}
+}
+
+// originalStyleNewCharacter is new_character for games with one talent tree
+// per specialization, no hero talents and no Mythic+ (WoW: Forever).
+func originalStyleNewCharacter(g blizzard.Game) promptDef {
+	return promptDef{
+		prompt: &mcp.Prompt{
+			Name:        "new_character",
+			Title:       "Plan a new character",
+			Description: "Recommend a race, class, specialization and starting talents for a new " + g.Title() + " character.",
+			Arguments: []*mcp.PromptArgument{
+				{Name: "goal", Description: "What the player wants, e.g. 'tank for dungeons', 'solo questing', 'easy healer'."},
+				{Name: "faction", Description: "Alliance, Horde, or leave empty for either."},
+				{Name: "preferences", Description: "Anything else: melee or ranged, favorite races, playstyle, experience level."},
+			},
+		},
+		build: func(a map[string]string) string {
+			var b strings.Builder
+			fmt.Fprintf(&b, "Help me plan a new %s character.\n\n", g.Title())
+			fmt.Fprintf(&b, "Goal: %s\n", orDefault(a["goal"], "not decided; suggest a few good options"))
+			fmt.Fprintf(&b, "Faction: %s\n", orDefault(a["faction"], "either"))
+			fmt.Fprintf(&b, "Preferences: %s\n\n", orDefault(a["preferences"], "none given"))
+			b.WriteString(`Use the wowapi tools rather than memory, since this game's data is new and may still change:
+1. wow_classes (no name) to list the classes and their specializations. This game's API has no role or primary stat data, so judge those from the class and specialization names.
+2. wow_classes with a class name for each class that fits the goal: its resource and which races can play it.
+3. wow_races (no name) for races that can play those classes on the chosen faction, then wow_races with a race name to compare racial abilities. Races can differ by faction in which classes they offer (the new Skyborne come in an Alliance and a Horde version).
+4. wow_talents for the recommended specialization, to explain its original-style talent tree and which talents to take first.
+
+This game's talents are original-style, with one tree per specialization. Finish with: the recommended race, class and specialization; why they fit; one or two alternatives; and the first talents to prioritize. Say where a choice is personal taste rather than power.`)
+			return b.String()
+		},
+	}
+}
+
+// characterPrompts need character lookups (FeatureCharacters).
+var characterPrompts = []promptDef{
 	{
 		prompt: &mcp.Prompt{
 			Name:        "character_review",
@@ -87,8 +144,8 @@ End with a prioritized plan. Say clearly when Blizzard's API can't tell where a 
 	},
 }
 
-func addPrompts(s *mcp.Server) {
-	for _, p := range prompts {
+func addPrompts(s *mcp.Server, g blizzard.Game) {
+	for _, p := range promptsFor(g) {
 		build := p.build
 		s.AddPrompt(p.prompt, func(_ context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 			// The SDK does not enforce required arguments itself.

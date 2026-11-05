@@ -13,7 +13,19 @@ import (
 	"time"
 )
 
-// characterPath builds /profile/wow/character/{realm}/{name}{suffix}.
+// characterPath builds /profile/wow/character/{realm}/{name}{suffix}. Every
+// character lookup goes through it.
+//
+// TODO(forever): WoW: Forever characters have a first name and a surname, and
+// Forever has one mega-realm per ruleset (Normal, PvP, RP, RP-PvP). As of
+// 2026-11-05 Blizzard's API returns 404 for every Forever character lookup,
+// publishes no Forever realms (the realm index is 404, realm search is
+// empty) and documents neither the realm slugs nor how the surname appears in
+// the path, so Game.Require(FeatureCharacters) blocks character lookups for
+// Forever instead of guessing. Once lookups work, teach this function the real
+// format (likely with a WOW_SURNAME setting) and clear that unsupported entry
+// in game.go. /profile/user/wow needs a user OAuth token (wow.profile scope),
+// which this client-credentials tool does not have.
 func characterPath(realm, name, suffix string) (string, error) {
 	if realm == "" || name == "" {
 		return "", fmt.Errorf("realm and character name are required")
@@ -78,6 +90,9 @@ type BossKill struct {
 // contains it (case-insensitive, e.g. "midnight" or "current season"); boss-level
 // detail is included only when filtering, to keep the full history small.
 func (c *Client) Encounters(ctx context.Context, realm, name, kind, expansion string) (EncounterProgress, error) {
+	if err := c.Game.Require(FeatureCharacters); err != nil {
+		return EncounterProgress{}, err
+	}
 	kind = strings.ToLower(strings.TrimSpace(kind))
 	switch kind {
 	case "", "dungeon", "dungeons":
@@ -266,6 +281,12 @@ func round1(f float64) float64 { return float64(int(f*10+0.5)) / 10 }
 // a season (seasonID 0 means the current season), plus the season's name and
 // dates. A character with no runs gets an empty result, not an error.
 func (c *Client) MythicKeystoneSeason(ctx context.Context, realm, name string, seasonID int) (MythicSeason, error) {
+	if err := c.Game.Require(FeatureCharacters); err != nil {
+		return MythicSeason{}, err
+	}
+	if err := c.Game.Require(FeatureMythicPlus); err != nil {
+		return MythicSeason{}, err
+	}
 	base, err := characterPath(realm, name, "/mythic-keystone-profile")
 	if err != nil {
 		return MythicSeason{}, err
@@ -386,6 +407,14 @@ type RecipeOptions struct {
 // ProfessionRecipes reports which recipes of a profession tier a character
 // knows and which are missing. profession is a name ("tailoring") or numeric ID.
 func (c *Client) ProfessionRecipes(ctx context.Context, realm, name, profession string, opt RecipeOptions) (RecipeProgress, error) {
+	if err := c.Game.Require(FeatureCharacters); err != nil {
+		return RecipeProgress{}, err
+	}
+	if opt.Sources {
+		if err := c.Game.Require(FeatureRecipeSources); err != nil {
+			return RecipeProgress{}, err
+		}
+	}
 	tierID := opt.TierID
 	path, err := characterPath(realm, name, "/professions")
 	if err != nil {

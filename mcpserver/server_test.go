@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/glholland/wowapi/blizzard"
+	"github.com/glholland/wowapi/internal/fixtures"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -37,13 +38,29 @@ var fakeData = map[string]string{
 	"/data/wow/auctions/commodities":                                   `{"auctions":[{"item":{"id":7},"quantity":2,"unit_price":150}]}`,
 }
 
-func newTestSession(t *testing.T) *mcp.ClientSession {
+func newTestSession(t *testing.T) *mcp.ClientSession { return newSessionFor(t) }
+
+// newSessionFor starts a client session against a server built for a client
+// with the given options, e.g. blizzard.WithGame(blizzard.Forever). The fake
+// API answers 403 for namespaces Blizzard does not recognize and serves the
+// WoW: Forever namespaces from internal/fixtures.
+func newSessionFor(t *testing.T, opts ...blizzard.Option) *mcp.ClientSession {
 	t.Helper()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"access_token":"tok","expires_in":86399}`))
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		ns := r.Header.Get("Battlenet-Namespace")
+		if !fixtures.Known(ns) {
+			http.Error(w, fixtures.ForbiddenBody, http.StatusForbidden)
+			return
+		}
+		if status, body, ok := fixtures.Respond(ns, r.URL.Path, r.URL.Query()); ok {
+			w.WriteHeader(status)
+			w.Write(body)
+			return
+		}
 		if body, ok := fakeData[r.URL.Path]; ok {
 			w.Write([]byte(body))
 			return
@@ -53,7 +70,7 @@ func newTestSession(t *testing.T) *mcp.ClientSession {
 	api := httptest.NewServer(mux)
 	t.Cleanup(api.Close)
 
-	c := blizzard.New("id", "secret", "us", "en_US")
+	c := blizzard.New("id", "secret", "us", "en_US", opts...)
 	c.TokenURL, c.APIBase = api.URL+"/token", api.URL
 	t.Setenv("WOW_REALM", "Lightbringer")
 	t.Setenv("WOW_CHARACTER", "Mage")

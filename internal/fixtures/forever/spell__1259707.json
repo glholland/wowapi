@@ -1,0 +1,11 @@
+{
+ "id": 1259707,
+ "name": "Elemental Insight",
+ "description": "Damage dealt versus Elementals increased by 5%.",
+ "media": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/media/spell/1259707?namespace=static-1.60.1_70399-forever-us"
+  },
+  "id": 1259707
+ }
+}
