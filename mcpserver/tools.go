@@ -13,8 +13,8 @@ import (
 // ---- Input types (the SDK derives each tool's input schema from these) -----
 
 type characterRef struct {
-	Realm string `json:"realm,omitempty" jsonschema:"Realm name or slug, e.g. 'Area 52'. Defaults to WOW_REALM."`
-	Name  string `json:"name,omitempty" jsonschema:"Character name, exact spelling including accents. Defaults to WOW_CHARACTER."`
+	Realm string `json:"realm,omitempty" jsonschema:"Realm name or slug, e.g. 'Area 52'. Defaults to WOW_REALM. Ignored for WoW: Forever, which has no realms."`
+	Name  string `json:"name,omitempty" jsonschema:"Character name, exact spelling including accents. Defaults to WOW_CHARACTER. For WoW: Forever give first name and surname, e.g. 'Celdis Witdasticc'."`
 }
 
 type characterArgs struct {
@@ -105,8 +105,7 @@ func addTools(s *mcp.Server, c *blizzard.Client) {
 	game := c.Game
 
 	// Character data. Offered only for games whose API serves character
-	// profiles: WoW: Forever's does not yet, and its tools would only ever
-	// return 404s.
+	// profiles.
 	if game.Supports(blizzard.FeatureCharacters) {
 		addCharacterTools(s, c)
 	}
@@ -212,7 +211,7 @@ func addCharacterTools(s *mcp.Server, c *blizzard.Client) {
 		Description: "Get a character's profile from the Battle.net API. Sections: " + strings.Join(blizzard.SectionNames(), ", ") + ". Data updates when the character logs out.",
 		Annotations: annotations("Character profile"),
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, a characterArgs) (*mcp.CallToolResult, any, error) {
-		realm, name := defaultCharacter(a.Realm, a.Name)
+		realm, name := defaultCharacter(c.Game, a.Realm, a.Name)
 		return rawResult(c.Character(ctx, realm, name, a.Section))
 	})
 
@@ -221,7 +220,7 @@ func addCharacterTools(s *mcp.Server, c *blizzard.Client) {
 		Description: "A character's dungeon or raid progress: per instance and difficulty, bosses killed out of total. Without an expansion filter it covers every expansion but omits individual bosses; filter (e.g. 'midnight') for boss kill counts and last-kill dates.",
 		Annotations: annotations("Dungeon and raid progress"),
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, a encounterArgs) (*mcp.CallToolResult, blizzard.EncounterProgress, error) {
-		realm, name := defaultCharacter(a.Realm, a.Name)
+		realm, name := defaultCharacter(c.Game, a.Realm, a.Name)
 		out, err := c.Encounters(ctx, realm, name, a.Kind, a.Expansion)
 		return nil, out, err
 	})
@@ -232,7 +231,7 @@ func addCharacterTools(s *mcp.Server, c *blizzard.Client) {
 			Description: "A character's Mythic+ season: season name and dates, overall rating, and best runs (dungeon, key level, timed or not, duration, rating, affixes, party). For the current season it also includes this week's best runs. A character with no runs returns an empty list with a note.",
 			Annotations: annotations("Mythic+ season"),
 		}, func(ctx context.Context, _ *mcp.CallToolRequest, a mythicArgs) (*mcp.CallToolResult, blizzard.MythicSeason, error) {
-			realm, name := defaultCharacter(a.Realm, a.Name)
+			realm, name := defaultCharacter(c.Game, a.Realm, a.Name)
 			out, err := c.MythicKeystoneSeason(ctx, realm, name, a.SeasonID)
 			return nil, out, err
 		})
@@ -245,7 +244,7 @@ func addCharacterTools(s *mcp.Server, c *blizzard.Client) {
 			"Set sources=true to learn where each missing recipe comes from (boss drop, tradable or bind-on-pickup recipe item with AH price, or trainer/specialization); Blizzard's API has no vendor or quest data. Use wow_recipe for a recipe's reagents.",
 		Annotations: annotations("Profession recipes"),
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, a recipeProgressArgs) (*mcp.CallToolResult, blizzard.RecipeProgress, error) {
-		realm, name := defaultCharacter(a.Realm, a.Name)
+		realm, name := defaultCharacter(c.Game, a.Realm, a.Name)
 		out, err := c.ProfessionRecipes(ctx, realm, name, a.Profession, blizzard.RecipeOptions{TierID: a.SkillTierID, IncludeKnown: a.IncludeKnown, Sources: a.Sources})
 		return nil, out, err
 	})

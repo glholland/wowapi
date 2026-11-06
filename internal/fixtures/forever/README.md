@@ -28,8 +28,11 @@ Findings these responses encode (the tests rely on them):
 - A talent tree has only `spec_talent_nodes`: no class nodes, hero trees or
   restriction lines.
 
-`dynamic-forever-us` and `profile-forever-us` are valid namespaces that hold
-no data, so the fake server answers 404 for every path in them. Namespaces
+`dynamic-forever-us` is a valid namespace that holds no data, so the fake server
+answers 404 for every path in it. `profile-forever-us` serves one real character
+(`profile__celdis-witdasticc*.json`: summary and professions with the first 3
+recipes per profession; links removed) by `/profile/wow/character/first-surname`, with no realm in the path; everything else, including every
+realm-based path, is 404. Namespaces
 Blizzard doesn't recognize get 403.
 
 To refresh a fixture, fetch the same path with the `Battlenet-Namespace:

@@ -37,12 +37,18 @@ func Known(ns string) bool { return known[ns] }
 // Respond answers a request for a WoW: Forever namespace. It reports ok=false
 // when ns is not a Forever namespace, so the caller can serve it itself.
 //
-// Mirroring the API on 2026-11-05: static-forever-us has game data, while
-// dynamic-forever-us and profile-forever-us are valid namespaces that hold no
-// data yet, so every path in them is a 404.
+// Mirroring the API on 2026-11-05: static-forever-us has game data;
+// dynamic-forever-us is a valid namespace that holds no data yet, so every path
+// in it is a 404; profile-forever-us serves one character,
+// /profile/wow/character/celdis-witdasticc (the summary and /professions), and 404s everything else, including every realm-based path.
 func Respond(ns, path string, query url.Values) (status int, body []byte, ok bool) {
 	switch ns {
-	case "dynamic-forever-us", "profile-forever-us":
+	case "dynamic-forever-us":
+		return http.StatusNotFound, []byte(NotFoundBody), true
+	case "profile-forever-us":
+		if b, found := profileFile(path); found {
+			return http.StatusOK, b, true
+		}
 		return http.StatusNotFound, []byte(NotFoundBody), true
 	case "static-forever-us":
 	default:
@@ -65,5 +71,17 @@ func foreverFile(path string, query url.Values) ([]byte, bool) {
 		return nil, false
 	}
 	b, err := foreverFS.ReadFile("forever/" + strings.ReplaceAll(rest, "/", "__") + ".json")
+	return b, err == nil
+}
+
+// profileFile maps /profile/wow/character/celdis-witdasticc/professions to
+// forever/profile__celdis-witdasticc__professions.json. Forever characters
+// have no realm in the path.
+func profileFile(path string) ([]byte, bool) {
+	rest, ok := strings.CutPrefix(path, "/profile/wow/character/")
+	if !ok {
+		return nil, false
+	}
+	b, err := foreverFS.ReadFile("forever/profile__" + strings.ReplaceAll(rest, "/", "__") + ".json")
 	return b, err == nil
 }

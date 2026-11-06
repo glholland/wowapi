@@ -123,7 +123,7 @@ func (e *APIError) Error() string {
 	msg := fmt.Sprintf("battle.net %s: HTTP %d", e.Path, e.Status)
 	switch {
 	case e.Status == http.StatusNotFound && strings.HasPrefix(e.Path, "/profile/") && isForeverNamespace(e.Namespace):
-		msg += " (WoW: Forever character lookups are not served by Blizzard's API yet, and its realm slugs and name format are not published)"
+		msg += " (character not found: WoW: Forever characters are looked up by \"First Surname\" with no realm, and are only exposed after they have logged in)"
 	case e.Status == http.StatusNotFound && strings.HasPrefix(e.Path, "/profile/"):
 		msg += " (character not found: check realm/name spelling, and note characters below level 10 or inactive for a long time are not exposed)"
 	case e.Status == http.StatusForbidden && e.Namespace != "":

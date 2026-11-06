@@ -24,7 +24,8 @@ var version = "0.5.1" // x-release-please-version
 const usage = `wowapi - World of Warcraft Battle.net API client and MCP server
 
 Usage:
-  wowapi character [-section S] [realm] [name]   character profile (realm/name default to WOW_REALM/WOW_CHARACTER)
+  wowapi character [-section S] [realm] [name]   character profile (realm/name default to WOW_REALM/WOW_CHARACTER;
+                                                  Forever: just "First Surname", no realm)
   wowapi encounters [-kind dungeons|raids] [-expansion E] [realm] [name]
                                                  dungeon or raid boss progress
   wowapi mythic [-season N] [realm] [name]       Mythic+ rating and best runs (default: current season)
@@ -149,19 +150,19 @@ func run() error {
 	case "mcp":
 		return mcpserver.Run(ctx, c, version)
 	case "character":
-		realm, name := resolveCharacter(args)
+		realm, name := resolveCharacter(game, args)
 		return print(c.Character(ctx, realm, name, *section))
 	case "encounters":
-		realm, name := resolveCharacter(args)
+		realm, name := resolveCharacter(game, args)
 		return printJSON(c.Encounters(ctx, realm, name, *kind, *expansion))
 	case "mythic":
-		realm, name := resolveCharacter(args)
+		realm, name := resolveCharacter(game, args)
 		return printJSON(c.MythicKeystoneSeason(ctx, realm, name, *season))
 	case "recipes":
 		if len(args) == 0 {
 			return fmt.Errorf("usage: wowapi recipes [-tier N] [-known] [-sources] <profession> [realm] [name]")
 		}
-		realm, name := resolveCharacter(args[1:])
+		realm, name := resolveCharacter(game, args[1:])
 		return printJSON(c.ProfessionRecipes(ctx, realm, name, args[0], blizzard.RecipeOptions{TierID: *tier, IncludeKnown: *known, Sources: *sources}))
 	case "races":
 		return printJSON(c.Races(ctx, strings.Join(args, " ")))
@@ -236,7 +237,16 @@ func run() error {
 
 // resolveCharacter resolves [realm] [name] arguments, defaulting to WOW_REALM and
 // WOW_CHARACTER. An unquoted multi-word realm is everything but the last arg.
-func resolveCharacter(args []string) (realm, name string) {
+// WoW: Forever has no realms: every argument is part of the "First Surname"
+// name, and WOW_REALM is not used.
+func resolveCharacter(game blizzard.Game, args []string) (realm, name string) {
+	if game == blizzard.Forever {
+		name = blizzard.Env("WOW_CHARACTER")
+		if len(args) > 0 {
+			name = strings.Join(args, " ")
+		}
+		return "", name
+	}
 	realm, name = blizzard.Env("WOW_REALM"), blizzard.Env("WOW_CHARACTER")
 	switch len(args) {
 	case 0:

@@ -114,7 +114,7 @@ func addResources(s *mcp.Server, c *blizzard.Client) {
 			URITemplate: uriTemplateCharacter,
 			Name:        "character",
 			Title:       "Character summary",
-			Description: "A character's profile summary (level, class, spec, item level, last logout).",
+			Description: "A character's profile summary (level, class, spec, item level, last logout). For WoW: Forever use any realm segment and the name 'First Surname'.",
 			MIMEType:    "application/json",
 		}, characterHandler)
 		s.AddResourceTemplate(&mcp.ResourceTemplate{

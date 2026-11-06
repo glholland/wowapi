@@ -1,0 +1,232 @@
+{
+ "character": {
+  "key": {
+   "href": "https://us.api.blizzard.com/profile/wow/character/celdis-witdasticc?namespace=profile-forever-us"
+  },
+  "name": "Celdis",
+  "id": 7921549,
+  "surname": "Witdasticc",
+  "slug": "celdis-witdasticc"
+ },
+ "primaries": [
+  {
+   "profession": {
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/profession/197?namespace=static-1.60.1_70399-forever-us"
+    },
+    "name": "Tailoring",
+    "id": 197
+   },
+   "tiers": [
+    {
+     "skill_points": 48,
+     "max_skill_points": 75,
+     "tier": {
+      "name": "Tailoring",
+      "id": 2948
+     },
+     "known_recipes": [
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/6577?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Simple Linen Boots",
+       "id": 6577
+      },
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/6576?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Simple Linen Pants",
+       "id": 6576
+      },
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/2408?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Brown Linen Pants",
+       "id": 2408
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "profession": {
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/profession/333?namespace=static-1.60.1_70399-forever-us"
+    },
+    "name": "Enchanting",
+    "id": 333
+   },
+   "tiers": [
+    {
+     "skill_points": 22,
+     "max_skill_points": 75,
+     "tier": {
+      "name": "Enchanting",
+      "id": 2940
+     },
+     "known_recipes": [
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/7999?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Lesser Magic Wand",
+       "id": 7999
+      },
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/7316?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Disenchant",
+       "id": 7316
+      },
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/4289?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Enchant Bracer - Inferior Stamina",
+       "id": 4289
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "secondaries": [
+  {
+   "profession": {
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/profession/185?namespace=static-1.60.1_70399-forever-us"
+    },
+    "name": "Cooking",
+    "id": 185
+   },
+   "tiers": [
+    {
+     "skill_points": 40,
+     "max_skill_points": 75,
+     "tier": {
+      "name": "Cooking",
+      "id": 2939
+     },
+     "known_recipes": [
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/1535?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Charred Wolf Meat",
+       "id": 1535
+      },
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/1536?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Spiced Wolf Meat",
+       "id": 1536
+      },
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/1537?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Roasted Boar Meat",
+       "id": 1537
+      },
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/4353?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Brilliant Smallfish",
+       "id": 4353
+      },
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/4786?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Herb Baked Egg",
+       "id": 4786
+      },
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/52640?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Basic Campfire",
+       "id": 52640
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "profession": {
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/profession/356?namespace=static-1.60.1_70399-forever-us"
+    },
+    "name": "Fishing",
+    "id": 356
+   },
+   "tiers": [
+    {
+     "skill_points": 35,
+     "max_skill_points": 75,
+     "tier": {
+      "name": "Fishing",
+      "id": 2943
+     },
+     "known_recipes": [
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/4344?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Fishing",
+       "id": 4344
+      },
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/52639?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Fish Bowl",
+       "id": 52639
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "profession": {
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/profession/129?namespace=static-1.60.1_70399-forever-us"
+    },
+    "name": "First Aid",
+    "id": 129
+   },
+   "tiers": [
+    {
+     "skill_points": 20,
+     "max_skill_points": 75,
+     "tier": {
+      "name": "First Aid",
+      "id": 2942
+     },
+     "known_recipes": [
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/1838?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "Linen Bandage",
+       "id": 1838
+      },
+      {
+       "key": {
+        "href": "https://us.api.blizzard.com/data/wow/recipe/52641?namespace=static-1.60.1_70399-forever-us"
+       },
+       "name": "First Aid Kit",
+       "id": 52641
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

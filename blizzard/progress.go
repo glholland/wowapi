@@ -13,25 +13,39 @@ import (
 	"time"
 )
 
-// characterPath builds /profile/wow/character/{realm}/{name}{suffix}. Every
-// character lookup goes through it.
+// characterPath builds the profile path for a character. Every character
+// lookup goes through it.
 //
-// TODO(forever): WoW: Forever characters have a first name and a surname, and
-// Forever has one mega-realm per ruleset (Normal, PvP, RP, RP-PvP). As of
-// 2026-11-05 Blizzard's API returns 404 for every Forever character lookup,
-// publishes no Forever realms (the realm index is 404, realm search is
-// empty) and documents neither the realm slugs nor how the surname appears in
-// the path, so Game.Require(FeatureCharacters) blocks character lookups for
-// Forever instead of guessing. Once lookups work, teach this function the real
-// format (likely with a WOW_SURNAME setting) and clear that unsupported entry
-// in game.go. /profile/user/wow needs a user OAuth token (wow.profile scope),
-// which this client-credentials tool does not have.
-func characterPath(realm, name, suffix string) (string, error) {
+// Retail: /profile/wow/character/{realm}/{name}{suffix}.
+//
+// Forever: /profile/wow/character/{first}-{surname}{suffix}. Forever characters
+// have a first name and a surname, the API has no realm in the path (the
+// realm-based route returns 404 for every name), and the realm argument is
+// ignored. The name may be written "Celdis Witdasticc" or "celdis-witdasticc".
+// Verified against the live API on 2026-11-05.
+func (c *Client) characterPath(realm, name, suffix string) (string, error) {
+	if c.Game == Forever {
+		slug, err := foreverCharacterSlug(name)
+		if err != nil {
+			return "", err
+		}
+		return "/profile/wow/character/" + url.PathEscape(slug) + suffix, nil
+	}
 	if realm == "" || name == "" {
 		return "", fmt.Errorf("realm and character name are required")
 	}
 	return fmt.Sprintf("/profile/wow/character/%s/%s%s",
 		url.PathEscape(RealmSlug(realm)), url.PathEscape(strings.ToLower(name)), suffix), nil
+}
+
+// foreverCharacterSlug turns "Celdis Witdasticc" into "celdis-witdasticc". A
+// Forever character needs both a first name and a surname.
+func foreverCharacterSlug(name string) (string, error) {
+	parts := strings.FieldsFunc(strings.ToLower(name), func(r rune) bool { return r == ' ' || r == '-' })
+	if len(parts) != 2 {
+		return "", fmt.Errorf("WoW: Forever characters have a first name and a surname, e.g. 'Celdis Witdasticc' (got %q); realm is not used", name)
+	}
+	return parts[0] + "-" + parts[1], nil
 }
 
 func isNotFound(err error) bool {
@@ -102,7 +116,7 @@ func (c *Client) Encounters(ctx context.Context, realm, name, kind, expansion st
 	default:
 		return EncounterProgress{}, fmt.Errorf("kind must be dungeons or raids, got %q", kind)
 	}
-	path, err := characterPath(realm, name, "/encounters/"+kind)
+	path, err := c.characterPath(realm, name, "/encounters/"+kind)
 	if err != nil {
 		return EncounterProgress{}, err
 	}
@@ -287,7 +301,7 @@ func (c *Client) MythicKeystoneSeason(ctx context.Context, realm, name string, s
 	if err := c.Game.Require(FeatureMythicPlus); err != nil {
 		return MythicSeason{}, err
 	}
-	base, err := characterPath(realm, name, "/mythic-keystone-profile")
+	base, err := c.characterPath(realm, name, "/mythic-keystone-profile")
 	if err != nil {
 		return MythicSeason{}, err
 	}
@@ -416,7 +430,7 @@ func (c *Client) ProfessionRecipes(ctx context.Context, realm, name, profession 
 		}
 	}
 	tierID := opt.TierID
-	path, err := characterPath(realm, name, "/professions")
+	path, err := c.characterPath(realm, name, "/professions")
 	if err != nil {
 		return RecipeProgress{}, err
 	}

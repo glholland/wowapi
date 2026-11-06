@@ -243,24 +243,39 @@ by probing the live API on 2026-11-05, the day after launch.
 
 | Works | Not available yet, so not offered |
 |---|---|
-| `races`, `classes`, `talents`: 10 races (the new Skyborne are two races, High Order for the Alliance and Windshaper for the Horde, with different class lists), 9 classes, 27 original-style talent trees | **Characters** (`character`, `encounters`, `recipes`): every lookup returns 404 and no Forever realms are published |
-| `search`, `item`, `profession`, `recipe`: items, one Tailoring-style skill tier per profession, recipes | **Mythic+** (`mythic`): Forever has none |
-| `get` / `wow_api_get`, `mcp` | **Auction House** (`price`): no commodity endpoint, and no realms to list auctions for |
-| `wow://races`, `wow://classes`, `wow://race/..`, `wow://class/..`, `wow://talents/..` resources and the `new_character` prompt | Class, hero and PvP talents (`talents -section class\|hero\|pvp`): Forever has one tree per specialization. Recipe sources: the dungeon journal is empty. |
+| `races`, `classes`, `talents`: 10 races (the new Skyborne are two races, High Order for the Alliance and Windshaper for the Horde, with different class lists), 9 classes, 27 original-style talent trees | **Mythic+** (`mythic`): Forever has none |
+| `character`, `encounters`, `recipes`: a character by `First Surname`, no realm (see below) | **Auction House** (`price`): no commodity endpoint, and no realms to list auctions for |
+| `search`, `item`, `profession`, `recipe`: items, one Tailoring-style skill tier per profession, recipes | Class, hero and PvP talents (`talents -section class\|hero\|pvp`): Forever has one tree per specialization. Recipe sources (`recipes -sources`): the dungeon journal is empty. |
+| `get` / `wow_api_get`, `mcp`, the `wow://` resources and the three prompts | |
 
 Under `WOW_GAME=forever` the MCP server registers only the tools, resources
-and prompts in the left column (8 tools, 5 resources, 1 prompt; `task
+and prompts in the left column (11 tools, 7 resources, 3 prompts; `task
 mcp:list:forever` prints them), and a CLI command from the right column fails
-with an explanation instead of a raw 404. The Forever `new_character` prompt
-plans around races, classes and talent trees only.
+with an explanation instead of a raw 404. The Forever prompts leave out
+hero talents, Mythic+, recipe sources and prices.
+
+### Forever characters
+
+Forever characters have a first name and a surname and **no realm**: the
+profile path is `/profile/wow/character/first-surname`.
+
+```bash
+WOW_GAME=forever wowapi character Celdis Witdasticc
+WOW_GAME=forever wowapi recipes Enchanting "Celdis Witdasticc"
+```
+
+The realm argument and `WOW_REALM` are ignored (set `WOW_CHARACTER` to
+`First Surname` for a default). Blizzard doesn't document this; it was found by
+probing on 2026-11-05 after the realm-based routes returned 404 for every name
+and the realm index stayed empty. A character shows up once it has logged in,
+and data reflects the last logout. Characters are matched by name, so only the
+name is needed, not an account login.
 
 Differences in the data: Forever's specialization records carry no role or
 primary stat, and a talent tree has only that specialization's talents, with
 several ranks each (no point-spending gates are published).
 
-Still blocked on Blizzard: character lookups (their realm slugs and the
-first-name-plus-surname path format aren't documented; `characterPath` in
-`blizzard/progress.go` has the TODO), realm and auction data, and the journal.
+Still missing from Blizzard's API: realms and auction data, and the journal.
 `wowapi get static-forever-us ...` and `wow_api_get` still reach anything the
 API does serve, so new endpoints can be tried without code changes. Adding a
 Classic flavor (`classic`, `classic1x`, `classicann` namespaces exist) is one

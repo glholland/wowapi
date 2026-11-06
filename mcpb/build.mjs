@@ -76,7 +76,7 @@ const longDescription = `Read-only access to Blizzard's official World of Warcra
 - **New characters:** races, classes, specializations and full talent trees
 - **Prices:** region-wide commodity prices on the Auction House
 
-Set **Game** to forever for World of Warcraft: Forever. Blizzard's API does not serve Forever character profiles, Mythic+ or Auction House data yet, so that mode offers races, classes, talent trees, items and professions only.
+Set **Game** to forever for World of Warcraft: Forever. Forever characters are looked up by first name and surname (for example "Celdis Witdasticc"), with no realm. Blizzard's API has no Mythic+ or Auction House data for Forever yet, so those tools are not offered.
 
 Needs a free Battle.net API client: create one at https://develop.battle.net/access/clients. Character data reflects each character's last logout.`;
 
