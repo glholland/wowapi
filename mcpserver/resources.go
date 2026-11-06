@@ -39,7 +39,7 @@ func addResources(s *mcp.Server, c *blizzard.Client) {
 		URI:         uriClasses,
 		Name:        "classes",
 		Title:       "Playable classes",
-		Description: "Every class with its specializations, role and primary stat.",
+		Description: classesResourceDescription(c.Game),
 		MIMEType:    "application/json",
 	}, func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		classes, err := c.Classes(ctx, "")
@@ -65,7 +65,7 @@ func addResources(s *mcp.Server, c *blizzard.Client) {
 		URITemplate: uriTemplateClass,
 		Name:        "class",
 		Title:       "Class details",
-		Description: "One class with spec descriptions, hero talent trees, PvP talents and races.",
+		Description: classResourceDescription(c.Game),
 		MIMEType:    "application/json",
 	}, func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		seg, err := segments(req.Params.URI, "class", 1)
@@ -91,37 +91,54 @@ func addResources(s *mcp.Server, c *blizzard.Client) {
 		return jsonResource(req.Params.URI, tree, err)
 	})
 
-	characterHandler := func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-		seg, err := segments(req.Params.URI, "character", 2, 3)
-		if err != nil {
-			return nil, err
+	// Character resources exist only where the API serves character profiles.
+	if c.Game.Supports(blizzard.FeatureCharacters) {
+		characterHandler := func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+			seg, err := segments(req.Params.URI, "character", 2, 3)
+			if err != nil {
+				return nil, err
+			}
+			section := "summary"
+			if len(seg) == 3 {
+				section = seg[2]
+			}
+			body, err := c.Character(ctx, seg[0], seg[1], section)
+			if err != nil {
+				return nil, err
+			}
+			return &mcp.ReadResourceResult{Contents: []*mcp.ResourceContents{{
+				URI: req.Params.URI, MIMEType: "application/json", Text: string(blizzard.Slim(body)),
+			}}}, nil
 		}
-		section := "summary"
-		if len(seg) == 3 {
-			section = seg[2]
-		}
-		body, err := c.Character(ctx, seg[0], seg[1], section)
-		if err != nil {
-			return nil, err
-		}
-		return &mcp.ReadResourceResult{Contents: []*mcp.ResourceContents{{
-			URI: req.Params.URI, MIMEType: "application/json", Text: string(blizzard.Slim(body)),
-		}}}, nil
+		s.AddResourceTemplate(&mcp.ResourceTemplate{
+			URITemplate: uriTemplateCharacter,
+			Name:        "character",
+			Title:       "Character summary",
+			Description: "A character's profile summary (level, class, spec, item level, last logout). For WoW: Forever use any realm segment and the name 'First Surname'.",
+			MIMEType:    "application/json",
+		}, characterHandler)
+		s.AddResourceTemplate(&mcp.ResourceTemplate{
+			URITemplate: uriTemplateSection,
+			Name:        "character-section",
+			Title:       "Character profile section",
+			Description: "One section of a character's profile. Sections: " + strings.Join(blizzard.SectionNames(), ", ") + ".",
+			MIMEType:    "application/json",
+		}, characterHandler)
 	}
-	s.AddResourceTemplate(&mcp.ResourceTemplate{
-		URITemplate: uriTemplateCharacter,
-		Name:        "character",
-		Title:       "Character summary",
-		Description: "A character's profile summary (level, class, spec, item level, last logout).",
-		MIMEType:    "application/json",
-	}, characterHandler)
-	s.AddResourceTemplate(&mcp.ResourceTemplate{
-		URITemplate: uriTemplateSection,
-		Name:        "character-section",
-		Title:       "Character profile section",
-		Description: "One section of a character's profile. Sections: " + strings.Join(blizzard.SectionNames(), ", ") + ".",
-		MIMEType:    "application/json",
-	}, characterHandler)
+}
+
+func classesResourceDescription(g blizzard.Game) string {
+	if g.Supports(blizzard.FeatureTalentExtras) {
+		return "Every class with its specializations, role and primary stat."
+	}
+	return "Every class with its specializations."
+}
+
+func classResourceDescription(g blizzard.Game) string {
+	if g.Supports(blizzard.FeatureTalentExtras) {
+		return "One class with spec descriptions, hero talent trees, PvP talents and races."
+	}
+	return "One class with its resource, specializations and the races that can play it."
 }
 
 // segments returns the unescaped path segments of a wow://<host>/... URI,

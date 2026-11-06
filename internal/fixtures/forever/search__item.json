@@ -1,0 +1,209 @@
+{
+ "page": 1,
+ "pageSize": 2,
+ "maxPageSize": 5,
+ "pageCount": 9,
+ "results": [
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/item/253665?namespace=static-1.60.1_70399-forever-us"
+   },
+   "data": {
+    "level": 5,
+    "required_level": 1,
+    "sell_price": 30,
+    "item_subclass": {
+     "name": {
+      "it_IT": "Sartoria",
+      "ru_RU": "Портняжное дело",
+      "en_GB": "Tailoring",
+      "zh_TW": "裁縫",
+      "ko_KR": "재봉술",
+      "en_US": "Tailoring",
+      "es_MX": "Sastrería",
+      "pt_BR": "Alfaiataria",
+      "es_ES": "Sastrería",
+      "zh_CN": "裁缝",
+      "fr_FR": "Couture",
+      "de_DE": "Schneiderei"
+     },
+     "id": 2
+    },
+    "is_equippable": false,
+    "purchase_quantity": 1,
+    "media": {
+     "id": 253665
+    },
+    "item_class": {
+     "name": {
+      "it_IT": "Ricette",
+      "ru_RU": "Рецепты",
+      "en_GB": "Recipe",
+      "zh_TW": "配方",
+      "ko_KR": "제조법",
+      "en_US": "Recipe",
+      "es_MX": "Receta",
+      "pt_BR": "Receita",
+      "es_ES": "Receta",
+      "zh_CN": "配方",
+      "fr_FR": "Recette",
+      "de_DE": "Rezept"
+     },
+     "id": 9
+    },
+    "quality": {
+     "name": {
+      "it_IT": "Pregiato",
+      "ru_RU": "Необычное",
+      "en_GB": "Uncommon",
+      "zh_TW": "優秀",
+      "ko_KR": "고급",
+      "en_US": "Uncommon",
+      "es_MX": "Inusual",
+      "pt_BR": "Incomum",
+      "es_ES": "No común",
+      "zh_CN": "优秀",
+      "fr_FR": "Inhabituel",
+      "de_DE": "Selten"
+     },
+     "type": "UNCOMMON"
+    },
+    "max_count": 0,
+    "is_stackable": false,
+    "name": {
+     "ru_RU": "Выкройка: льняная сумка с реагентами",
+     "en_GB": "Pattern: Linen Reagent Bag",
+     "zh_TW": "圖樣：亞麻材料袋",
+     "ko_KR": "도안: 리넨 재료 가방",
+     "en_US": "Pattern: Linen Reagent Bag",
+     "es_MX": "Patrón: bolsa de componentes de lino",
+     "pt_BR": "Molde: Sacola de Reagentes de Linho",
+     "es_ES": "Patrón: bolsa de componentes de lino",
+     "zh_CN": "图样：亚麻材料包",
+     "fr_FR": "Patron : sac de composants en lin",
+     "de_DE": "Muster: Leinenreagenzientasche"
+    },
+    "purchase_price": 150,
+    "id": 253665,
+    "inventory_type": {
+     "name": {
+      "it_IT": "Non equipaggiabile",
+      "ru_RU": "Неэкипируемое",
+      "en_GB": "Non-equippable",
+      "zh_TW": "無法裝備",
+      "ko_KR": "착용 불가",
+      "en_US": "Non-equippable",
+      "es_MX": "No equipable",
+      "pt_BR": "Não equipável",
+      "es_ES": "No se puede equipar",
+      "zh_CN": "无法装备",
+      "fr_FR": "Objet hors équipement",
+      "de_DE": "Nicht anlegbar"
+     },
+     "type": "NON_EQUIP"
+    }
+   }
+  },
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/item/253664?namespace=static-1.60.1_70399-forever-us"
+   },
+   "data": {
+    "level": 5,
+    "required_level": 0,
+    "sell_price": 200,
+    "item_subclass": {
+     "name": {
+      "it_IT": "Borsa dei Reagenti",
+      "ru_RU": "Сумка с реагентами",
+      "en_GB": "Reagent Bag",
+      "zh_TW": "材料袋",
+      "ko_KR": "재료 가방",
+      "en_US": "Reagent Bag",
+      "es_MX": "Bolsa de componentes",
+      "pt_BR": "Sacola de Reagentes",
+      "es_ES": "Bolsa de componentes",
+      "zh_CN": "材料包",
+      "fr_FR": "Sac de composants",
+      "de_DE": "Reagenzientasche"
+     },
+     "id": 11
+    },
+    "is_equippable": true,
+    "purchase_quantity": 1,
+    "media": {
+     "id": 253664
+    },
+    "item_class": {
+     "name": {
+      "it_IT": "Contenitori",
+      "ru_RU": "Сумки",
+      "en_GB": "Container",
+      "zh_TW": "容器",
+      "ko_KR": "가방",
+      "en_US": "Container",
+      "es_MX": "Contenedor",
+      "pt_BR": "Recipiente",
+      "es_ES": "Contenedor",
+      "zh_CN": "容器",
+      "fr_FR": "Conteneur",
+      "de_DE": "Behälter"
+     },
+     "id": 1
+    },
+    "quality": {
+     "name": {
+      "it_IT": "Comune",
+      "ru_RU": "Обычное",
+      "en_GB": "Common",
+      "zh_TW": "普通",
+      "ko_KR": "일반",
+      "en_US": "Common",
+      "es_MX": "Común",
+      "pt_BR": "Comum",
+      "es_ES": "Común",
+      "zh_CN": "普通",
+      "fr_FR": "Commun",
+      "de_DE": "Verbreitet"
+     },
+     "type": "COMMON"
+    },
+    "max_count": 0,
+    "is_stackable": false,
+    "name": {
+     "it_IT": "Sacca di Telarunica",
+     "ru_RU": "Льняная сумка с реагентами",
+     "en_GB": "Linen Reagent Bag",
+     "zh_TW": "亞麻材料袋",
+     "ko_KR": "리넨 재료 가방",
+     "en_US": "Linen Reagent Bag",
+     "es_MX": "Bolsa de componentes de lino",
+     "pt_BR": "Sacola de Reagentes de Linho",
+     "es_ES": "Bolsa de componentes de lino",
+     "zh_CN": "亚麻材料包",
+     "fr_FR": "Sac de composants en lin",
+     "de_DE": "Leinenreagenzientasche"
+    },
+    "purchase_price": 20000,
+    "id": 253664,
+    "inventory_type": {
+     "name": {
+      "it_IT": "Sacca",
+      "ru_RU": "Сумка",
+      "en_GB": "Bag",
+      "zh_TW": "背包",
+      "ko_KR": "가방",
+      "en_US": "Bag",
+      "es_MX": "Bolsa",
+      "pt_BR": "Bolsa",
+      "es_ES": "Bolsas",
+      "zh_CN": "背包",
+      "fr_FR": "Sac",
+      "de_DE": "Tasche"
+     },
+     "type": "BAG"
+    }
+   }
+  }
+ ]
+}
