@@ -70,7 +70,7 @@ func (c *Client) Character(ctx context.Context, realm, name, section string) ([]
 	if !ok {
 		return nil, fmt.Errorf("unknown section %q (valid: %s)", section, strings.Join(SectionNames(), ", "))
 	}
-	path, err := characterPath(realm, name, suffix)
+	path, err := c.characterPath(realm, name, suffix)
 	if err != nil {
 		return nil, err
 	}

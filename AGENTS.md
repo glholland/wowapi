@@ -136,8 +136,13 @@ Use Task rather than raw `go` commands:
   `games` entry (namespaces `classic`, `classic1x`, `classicann` exist).
 - Blizzard answers **403** for a namespace it doesn't recognize and **404** for a
   recognized namespace without the data (`dynamic-forever-us` and
-  `profile-forever-us` are valid but empty as of 2026-11-05). Don't read a 404
+  `profile-forever-us` are valid; the first is empty and the second serves only
+  realmless character paths, as of 2026-11-05). Don't read a 404
   as "wrong namespace". The fake APIs mirror both.
+- Forever characters have no realm: the path is `/profile/wow/character/first-surname`
+  (realm-based paths 404 for every name), built by `Client.characterPath`. The
+  realm argument and `WOW_REALM` are ignored under `WOW_GAME=forever`.
+  `/profile/user/wow` is still out of reach (needs a user OAuth token).
 - Forever data quirks: Skyborne is two races with different names, factions and
   class lists (don't merge them); specialization records have no role or
   primary stat (omitted from output); talent trees hold only `spec_talent_nodes`;

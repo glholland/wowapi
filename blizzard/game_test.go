@@ -81,6 +81,12 @@ func TestFeatureSupport(t *testing.T) {
 		if !Retail.Supports(f) || Retail.Require(f) != nil {
 			t.Errorf("retail should support feature %d", f)
 		}
+		if f == FeatureCharacters { // Forever serves characters, by "First Surname"
+			if !Forever.Supports(f) || Forever.Require(f) != nil {
+				t.Errorf("forever should support character lookups")
+			}
+			continue
+		}
 		err := Forever.Require(f)
 		if Forever.Supports(f) || err == nil || !strings.Contains(err.Error(), "WOW_GAME=forever does not support "+featureLabels[f]) {
 			t.Errorf("forever should reject feature %d with a clear error, got %v", f, err)
@@ -115,7 +121,7 @@ func TestClientUsesTheGameNamespace(t *testing.T) {
 	}
 	// Character 404s explain themselves per game.
 	_, err = c.Get(ctx, "/profile/wow/character/forever/celdis", Profile, nil)
-	if err == nil || !strings.Contains(err.Error(), "WoW: Forever character lookups are not served") {
+	if err == nil || !strings.Contains(err.Error(), "First Surname") {
 		t.Errorf("a Forever character 404 should explain itself: %v", err)
 	}
 	retail, _ := fakeAPI(t)
@@ -131,10 +137,7 @@ func TestForeverRejectsRetailOnlyCalls(t *testing.T) {
 	c, tokenCalls := fakeAPIFor(t, WithGame(Forever))
 	ctx := context.Background()
 	for name, call := range map[string]func() error{
-		"character":     func() error { _, err := c.Character(ctx, "x", "y", ""); return err },
-		"encounters":    func() error { _, err := c.Encounters(ctx, "x", "y", "", ""); return err },
-		"mythic":        func() error { _, err := c.MythicKeystoneSeason(ctx, "x", "y", 0); return err },
-		"recipes":       func() error { _, err := c.ProfessionRecipes(ctx, "x", "y", "tailoring", RecipeOptions{}); return err },
+		"mythic":        func() error { _, err := c.MythicKeystoneSeason(ctx, "", "Celdis Witdasticc", 0); return err },
 		"commodity":     func() error { _, err := c.Commodity(ctx, 1); return err },
 		"talents hero":  func() error { _, err := c.Talents(ctx, "", "Elemental Combat", "hero", ""); return err },
 		"talents pvp":   func() error { _, err := c.Talents(ctx, "", "Elemental Combat", "pvp", ""); return err },
@@ -306,4 +309,56 @@ func contains(list []string, s string) bool {
 		}
 	}
 	return false
+}
+
+// Forever characters have a first name and a surname and no realm: the path is
+// /profile/wow/character/first-surname, and any realm argument is ignored.
+func TestForeverCharacter(t *testing.T) {
+	c, _ := fakeAPIFor(t, WithGame(Forever))
+	ctx := context.Background()
+	for _, tc := range []struct{ realm, name string }{
+		{"", "Celdis Witdasticc"},
+		{"Lightbringer", "Celdis Witdasticc"}, // retail realm default must not matter
+		{"", "celdis-witdasticc"},
+		{"", "  CELDIS   Witdasticc "},
+	} {
+		body, err := c.Character(ctx, tc.realm, tc.name, "")
+		if err != nil {
+			t.Fatalf("%+v: %v", tc, err)
+		}
+		var ch struct {
+			Name, Surname string
+			Level         int
+		}
+		if err := json.Unmarshal(body, &ch); err != nil || ch.Name != "Celdis" || ch.Surname != "Witdasticc" || ch.Level != 11 {
+			t.Errorf("%+v: unexpected summary %s (%v)", tc, body, err)
+		}
+	}
+	body, err := c.Character(ctx, "", "Celdis Witdasticc", "professions")
+	if err != nil || !strings.Contains(string(body), "Tailoring") || !strings.Contains(string(body), "Enchanting") {
+		t.Errorf("professions section: %s %v", body, err)
+	}
+	// A single name, or three, is not a Forever character name.
+	for _, name := range []string{"", "Celdis", "Celdis Witdasticc Jr"} {
+		_, err := c.Character(ctx, "", name, "")
+		if err == nil || !strings.Contains(err.Error(), "first name and a surname") {
+			t.Errorf("name %q: want a first-name-and-surname error, got %v", name, err)
+		}
+	}
+	// A Forever character that does not exist is a 404 with the Forever hint.
+	_, err = c.Character(ctx, "", "Nobody Atall", "")
+	if err == nil || !strings.Contains(err.Error(), "HTTP 404") || !strings.Contains(err.Error(), "First Surname") {
+		t.Errorf("unknown character: %v", err)
+	}
+}
+
+func TestCharacterPathRetailKeepsRealm(t *testing.T) {
+	c := New("", "", "us", "en_US")
+	got, err := c.characterPath("Area 52", "Cëldis", "/equipment")
+	if err != nil || got != "/profile/wow/character/area-52/c%C3%ABldis/equipment" {
+		t.Errorf("retail path: %q %v", got, err)
+	}
+	if _, err := c.characterPath("", "Cëldis", ""); err == nil {
+		t.Error("retail still needs a realm")
+	}
 }

@@ -25,11 +25,8 @@ func TestForeverRejectsRetailOnlyCommands(t *testing.T) {
 		flags gateFlags
 		want  string
 	}{
-		{"character", gateFlags{section: "summary"}, "character lookups"},
-		{"encounters", gateFlags{}, "character lookups"},
-		{"mythic", gateFlags{}, "character lookups"},
-		{"recipes", gateFlags{}, "character lookups"},
-		{"recipes", gateFlags{sources: true}, "character lookups"},
+		{"mythic", gateFlags{}, "Mythic+"},
+		{"recipes", gateFlags{sources: true}, "recipe sources"},
 		{"price", gateFlags{}, "commodity prices"},
 		{"talents", gateFlags{section: "hero"}, "class, hero or PvP talents"},
 		{"talents", gateFlags{section: "pvp"}, "class, hero or PvP talents"},
@@ -59,6 +56,7 @@ func TestForeverRunsTheCommandsItCanServe(t *testing.T) {
 		flags gateFlags
 	}{
 		{"races", gateFlags{}}, {"classes", gateFlags{}},
+		{"character", gateFlags{section: "summary"}}, {"encounters", gateFlags{}}, {"recipes", gateFlags{}},
 		{"talents", gateFlags{section: "summary"}}, // the flag default: the whole tree
 		{"talents", gateFlags{section: "spec"}},
 		{"search", gateFlags{}}, {"item", gateFlags{}}, {"profession", gateFlags{}}, {"recipe", gateFlags{}},

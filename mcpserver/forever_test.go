@@ -36,11 +36,11 @@ func TestForeverOffersOnlyWhatWorks(t *testing.T) {
 	ctx := context.Background()
 
 	got := strings.Join(toolNames(t, cs), " ")
-	want := "wow_api_get wow_classes wow_item wow_item_search wow_profession wow_races wow_recipe wow_talents"
+	want := "wow_api_get wow_character wow_character_encounters wow_classes wow_item wow_item_search wow_profession wow_profession_recipes wow_races wow_recipe wow_talents"
 	if got != want {
 		t.Errorf("forever tools:\n got  %s\n want %s", got, want)
 	}
-	for _, gone := range []string{"wow_character", "wow_character_encounters", "wow_mythic_plus", "wow_profession_recipes", "wow_commodity_price"} {
+	for _, gone := range []string{"wow_mythic_plus", "wow_commodity_price"} {
 		if strings.Contains(" "+got+" ", " "+gone+" ") {
 			t.Errorf("%s should not be offered for forever", gone)
 		}
@@ -59,20 +59,26 @@ func TestForeverOffersOnlyWhatWorks(t *testing.T) {
 		uris = append(uris, r.URITemplate)
 	}
 	sort.Strings(uris)
-	if strings.Join(uris, " ") != "wow://class/{class} wow://classes wow://race/{race} wow://races wow://talents/{class}/{spec}" {
+	if strings.Join(uris, " ") != "wow://character/{realm}/{name} wow://character/{realm}/{name}/{section} wow://class/{class} wow://classes wow://race/{race} wow://races wow://talents/{class}/{spec}" {
 		t.Errorf("forever resources: %v", uris)
 	}
-	if _, err := cs.ReadResource(ctx, &mcp.ReadResourceParams{URI: "wow://character/Forever/Celdis"}); err == nil {
-		t.Error("character resources should not exist for forever")
+	res2, err := cs.ReadResource(ctx, &mcp.ReadResourceParams{URI: "wow://character/any/Celdis%20Witdasticc"})
+	if err != nil || len(res2.Contents) != 1 || !strings.Contains(res2.Contents[0].Text, "Witdasticc") {
+		t.Errorf("forever character resource: %+v %v", res2, err)
 	}
 
 	prompts, _ := cs.ListPrompts(ctx, nil)
-	if len(prompts.Prompts) != 1 || prompts.Prompts[0].Name != "new_character" {
-		t.Errorf("forever should offer only new_character: %+v", prompts.Prompts)
+	var promptNames []string
+	for _, pr := range prompts.Prompts {
+		promptNames = append(promptNames, pr.Name)
+	}
+	sort.Strings(promptNames)
+	if strings.Join(promptNames, " ") != "character_review new_character profession_plan" {
+		t.Errorf("forever prompts: %v", promptNames)
 	}
 	init := cs.InitializeResult()
 	if !strings.Contains(init.ServerInfo.Title, "World of Warcraft: Forever") ||
-		!strings.Contains(init.Instructions, "does not serve this game's character profiles") {
+		!strings.Contains(init.Instructions, "first name and a surname") {
 		t.Errorf("title and instructions should describe Forever: %q / %q", init.ServerInfo.Title, init.Instructions)
 	}
 }
@@ -204,7 +210,7 @@ func TestDescribeHonorsTheGame(t *testing.T) {
 	if err := json.Unmarshal(buf.Bytes(), &sum); err != nil {
 		t.Fatal(err)
 	}
-	if len(sum.Tools) != 8 || len(sum.Resources) != 5 || len(sum.Prompts) != 1 {
-		t.Errorf("forever should list 8 tools, 5 resources and 1 prompt: %d/%d/%d", len(sum.Tools), len(sum.Resources), len(sum.Prompts))
+	if len(sum.Tools) != 11 || len(sum.Resources) != 7 || len(sum.Prompts) != 3 {
+		t.Errorf("forever should list 11 tools, 7 resources and 3 prompts: %d/%d/%d", len(sum.Tools), len(sum.Resources), len(sum.Prompts))
 	}
 }

@@ -55,9 +55,9 @@ var games = map[Game]gameInfo{
 		title:  "World of Warcraft: Forever",
 		flavor: "forever",
 		// Verified against the live API on 2026-11-05 (the day after launch);
-		// the "not yet" entries are Blizzard's to fix and worth rechecking.
+		// the "not yet" entries are Blizzard's to fix and worth rechecking. Characters
+		// are served without a realm (see Client.characterPath), so they are not listed.
 		unsupported: map[Feature]string{
-			FeatureCharacters:    "Blizzard's API does not serve Forever character profiles yet: every lookup returns 404 and no Forever realms are listed (checked 2026-11-05)",
 			FeatureMythicPlus:    "Forever has no Mythic+",
 			FeatureCommodities:   "Forever has no commodity Auction House endpoint (it returns 404), and realm auctions are not published yet",
 			FeatureRecipeSources: "Forever's dungeon journal is empty, so there are no boss loot tables to search",

@@ -21,7 +21,7 @@ type promptDef struct {
 func promptsFor(g blizzard.Game) []promptDef {
 	defs := []promptDef{newCharacterPrompt(g)}
 	if g.Supports(blizzard.FeatureCharacters) {
-		defs = append(defs, characterPrompts...)
+		defs = append(defs, characterPrompts(g)...)
 	}
 	return defs
 }
@@ -98,50 +98,80 @@ This game's talents are original-style, with one tree per specialization. Finish
 	}
 }
 
-// characterPrompts need character lookups (FeatureCharacters).
-var characterPrompts = []promptDef{
-	{
-		prompt: &mcp.Prompt{
-			Name:        "character_review",
-			Title:       "Review a character",
-			Description: "Review a character's gear, progress and professions and suggest next steps.",
-			Arguments: []*mcp.PromptArgument{
-				{Name: "realm", Description: "Realm name. Defaults to WOW_REALM."},
-				{Name: "name", Description: "Character name, exact spelling including accents. Defaults to WOW_CHARACTER."},
+// characterPrompts need character lookups (FeatureCharacters). Steps that use
+// data a game lacks (Mythic+, recipe sources, Auction House prices) are left
+// out of that game's prompts; retail's text is unchanged.
+func characterPrompts(g blizzard.Game) []promptDef {
+	realmArg := "Realm name. Defaults to WOW_REALM."
+	nameArg := "Character name, exact spelling including accents. Defaults to WOW_CHARACTER."
+	if g == blizzard.Forever {
+		realmArg = "Not used: WoW: Forever has no realms."
+		nameArg = "First name and surname, e.g. 'Celdis Witdasticc'. Defaults to WOW_CHARACTER."
+	}
+	return []promptDef{
+		{
+			prompt: &mcp.Prompt{
+				Name:        "character_review",
+				Title:       "Review a character",
+				Description: "Review a character's gear, progress and professions and suggest next steps.",
+				Arguments: []*mcp.PromptArgument{
+					{Name: "realm", Description: realmArg},
+					{Name: "name", Description: nameArg},
+				},
 			},
-		},
-		build: func(a map[string]string) string {
-			who := "my default character (WOW_REALM / WOW_CHARACTER)"
-			if a["name"] != "" {
-				who = fmt.Sprintf("%s on %s", a["name"], orDefault(a["realm"], "my default realm"))
-			}
-			return fmt.Sprintf(`Review %s using the wowapi tools:
+			build: func(a map[string]string) string {
+				who := "my default character (WOW_REALM / WOW_CHARACTER)"
+				if g == blizzard.Forever {
+					who = "my default character (WOW_CHARACTER)"
+				}
+				if a["name"] != "" {
+					if g == blizzard.Forever {
+						who = a["name"]
+					} else {
+						who = fmt.Sprintf("%s on %s", a["name"], orDefault(a["realm"], "my default realm"))
+					}
+				}
+				progress := "wow_character_encounters for the current expansion, and wow_mythic_plus for the current season."
+				recipes := "wow_profession_recipes (with sources=true)"
+				if !g.Supports(blizzard.FeatureMythicPlus) {
+					progress = "wow_character sections quests and reputations, and wow_character_encounters for dungeon and raid progress."
+				}
+				if !g.Supports(blizzard.FeatureRecipeSources) {
+					recipes = "wow_profession_recipes"
+				}
+				return fmt.Sprintf(`Review %s using the wowapi tools:
 1. wow_character sections summary, equipment and stats: item level, weakest slots, missing enchants and empty sockets.
-2. wow_character_encounters for the current expansion, and wow_mythic_plus for the current season.
-3. wow_character section professions, then wow_profession_recipes (with sources=true) for their main professions.
+2. %s
+3. wow_character section professions, then %s for their main professions.
 
-Summarize where they stand, then list the most valuable next steps in order. Data reflects the character's last logout.`, who)
-		},
-	},
-	{
-		prompt: &mcp.Prompt{
-			Name:        "profession_plan",
-			Title:       "Plan profession progress",
-			Description: "Plan how to level a profession and collect its missing recipes, with Auction House prices.",
-			Arguments: []*mcp.PromptArgument{
-				{Name: "profession", Description: "Profession name, e.g. Tailoring.", Required: true},
-				{Name: "realm", Description: "Realm name. Defaults to WOW_REALM."},
-				{Name: "name", Description: "Character name. Defaults to WOW_CHARACTER."},
+Summarize where they stand, then list the most valuable next steps in order. Data reflects the character's last logout.`, who, progress, recipes)
 			},
 		},
-		build: func(a map[string]string) string {
-			return fmt.Sprintf(`Plan my %s progress. Use wow_profession_recipes with profession=%q and sources=true%s.
+		{
+			prompt: &mcp.Prompt{
+				Name:        "profession_plan",
+				Title:       "Plan profession progress",
+				Description: "Plan how to level a profession and collect its missing recipes, with Auction House prices.",
+				Arguments: []*mcp.PromptArgument{
+					{Name: "profession", Description: "Profession name, e.g. Tailoring.", Required: true},
+					{Name: "realm", Description: realmArg},
+					{Name: "name", Description: nameArg},
+				},
+			},
+			build: func(a map[string]string) string {
+				if g == blizzard.Forever {
+					return fmt.Sprintf(`Plan my %s progress. Use wow_profession_recipes with profession=%q%s.
+List the recipes still missing, then use wow_recipe for reagents of the ones worth learning next. Blizzard's API has no trainer, vendor or Auction House data for this game, so say clearly where you are guessing from general knowledge.
+End with a prioritized plan.`, a["profession"], a["profession"], characterClause(g, a))
+				}
+				return fmt.Sprintf(`Plan my %s progress. Use wow_profession_recipes with profession=%q and sources=true%s.
 Group the missing recipes by how to get them: boss drops (which dungeon or raid), buyable on the Auction House (with price), bind-on-pickup items, and trainer or specialization unlocks.
 Use wow_recipe and wow_commodity_price to check what the most useful missing recipes cost to craft.
 End with a prioritized plan. Say clearly when Blizzard's API can't tell where a recipe comes from.`,
-				a["profession"], a["profession"], characterClause(a))
+					a["profession"], a["profession"], characterClause(g, a))
+			},
 		},
-	},
+	}
 }
 
 func addPrompts(s *mcp.Server, g blizzard.Game) {
@@ -165,9 +195,12 @@ func addPrompts(s *mcp.Server, g blizzard.Game) {
 	}
 }
 
-func characterClause(a map[string]string) string {
+func characterClause(g blizzard.Game, a map[string]string) string {
 	if a["name"] == "" {
 		return ""
+	}
+	if g == blizzard.Forever {
+		return " for " + a["name"]
 	}
 	return fmt.Sprintf(" for %s on %s", a["name"], orDefault(a["realm"], "the default realm"))
 }
