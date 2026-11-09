@@ -1,0 +1,30 @@
+{
+ "id": 374,
+ "playable_class": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/playable-class/7?namespace=static-1.60.1_70399-forever-us"
+  },
+  "name": "Shaman",
+  "id": 7
+ },
+ "name": "Restoration",
+ "media": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/media/playable-specialization/374?namespace=static-1.60.1_70399-forever-us"
+  },
+  "id": 374
+ },
+ "spec_talent_tree": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/talent-tree/1082/playable-specialization/374?namespace=static-1.60.1_70399-forever-us"
+  },
+  "name": "Restoration"
+ },
+ "power_type": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/power-type/0?namespace=static-1.60.1_70399-forever-us"
+  },
+  "name": "Mana",
+  "id": 0
+ }
+}

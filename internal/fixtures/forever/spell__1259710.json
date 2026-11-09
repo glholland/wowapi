@@ -1,0 +1,11 @@
+{
+ "id": 1259710,
+ "name": "Wind Blessed",
+ "description": "Increases your spellcasting, melee, and ranged Haste by 2%.",
+ "media": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/media/spell/1259710?namespace=static-1.60.1_70399-forever-us"
+  },
+  "id": 1259710
+ }
+}

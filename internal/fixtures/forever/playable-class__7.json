@@ -1,0 +1,84 @@
+{
+ "id": 7,
+ "name": "Shaman",
+ "gender_name": {
+  "male": "Shaman",
+  "female": "Shaman"
+ },
+ "power_type": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/power-type/0?namespace=static-1.60.1_70399-forever-us"
+  },
+  "name": "Mana",
+  "id": 0
+ },
+ "specializations": [
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-specialization/375?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Elemental Combat",
+   "id": 375
+  },
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-specialization/373?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Enhancement",
+   "id": 373
+  },
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-specialization/374?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Restoration",
+   "id": 374
+  }
+ ],
+ "media": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/media/playable-class/7?namespace=static-1.60.1_70399-forever-us"
+  },
+  "id": 7
+ },
+ "pvp_talent_slots": {
+  "href": "https://us.api.blizzard.com/data/wow/playable-class/7/pvp-talent-slots?namespace=static-1.60.1_70399-forever-us"
+ },
+ "playable_races": [
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-race/96?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Windshaper Skyborne",
+   "id": 96
+  },
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-race/6?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Tauren",
+   "id": 6
+  },
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-race/3?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Dwarf",
+   "id": 3
+  },
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-race/2?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Orc",
+   "id": 2
+  },
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-race/8?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Troll",
+   "id": 8
+  }
+ ]
+}
