@@ -1,0 +1,100 @@
+{
+ "id": 8,
+ "name": "Mage",
+ "gender_name": {
+  "male": "Mage",
+  "female": "Mage"
+ },
+ "power_type": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/power-type/0?namespace=static-1.60.1_70399-forever-us"
+  },
+  "name": "Mana",
+  "id": 0
+ },
+ "specializations": [
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-specialization/237?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Arcane",
+   "id": 237
+  },
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-specialization/8?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Fire",
+   "id": 8
+  },
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-specialization/6?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Frost",
+   "id": 6
+  }
+ ],
+ "media": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/media/playable-class/8?namespace=static-1.60.1_70399-forever-us"
+  },
+  "id": 8
+ },
+ "pvp_talent_slots": {
+  "href": "https://us.api.blizzard.com/data/wow/playable-class/8/pvp-talent-slots?namespace=static-1.60.1_70399-forever-us"
+ },
+ "playable_races": [
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-race/1?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Human",
+   "id": 1
+  },
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-race/95?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "High Order Skyborne",
+   "id": 95
+  },
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-race/5?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Undead",
+   "id": 5
+  },
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-race/7?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Gnome",
+   "id": 7
+  },
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-race/2?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Orc",
+   "id": 2
+  },
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/playable-race/8?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Troll",
+   "id": 8
+  }
+ ],
+ "additional_power_types": [
+  {
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/power-type/4?namespace=static-1.60.1_70399-forever-us"
+   },
+   "name": "Combo Points",
+   "id": 4
+  }
+ ]
+}

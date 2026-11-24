@@ -1,0 +1,11 @@
+{
+ "id": 1259416,
+ "name": "Walk on Air",
+ "description": "Glide downward through the air for 10 sec while controlling your direction of travel.",
+ "media": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/media/spell/1259416?namespace=static-1.60.1_70399-forever-us"
+  },
+  "id": 1259416
+ }
+}

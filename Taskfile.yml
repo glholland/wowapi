@@ -205,6 +205,14 @@ tasks:
     cmds:
       - ./{{.BIN}} mcp -list
 
+  mcp:list:forever:
+    desc: List the MCP server's tools, resources and prompts for WoW Forever (WOW_GAME=forever; no credentials needed)
+    deps: [build]
+    env:
+      WOW_GAME: forever
+    cmds:
+      - ./{{.BIN}} mcp -list
+
   mcp:inspect:
     desc: Open the MCP Inspector web UI against the built server (needs Node.js; reads .env)
     deps: [build]

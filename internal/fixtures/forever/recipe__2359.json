@@ -1,0 +1,32 @@
+{
+ "id": 2359,
+ "name": "Bolt of Linen Cloth",
+ "media": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/media/recipe/2359?namespace=static-1.60.1_70399-forever-us"
+  },
+  "id": 2359
+ },
+ "crafted_item": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/item/2996?namespace=static-1.60.1_70399-forever-us"
+  },
+  "name": "Bolt of Linen Cloth",
+  "id": 2996
+ },
+ "reagents": [
+  {
+   "reagent": {
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/2589?namespace=static-1.60.1_70399-forever-us"
+    },
+    "name": "Linen Cloth",
+    "id": 2589
+   },
+   "quantity": 2
+  }
+ ],
+ "crafted_quantity": {
+  "value": 1.0
+ }
+}

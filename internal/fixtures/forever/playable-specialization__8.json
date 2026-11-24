@@ -1,0 +1,30 @@
+{
+ "id": 8,
+ "playable_class": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/playable-class/8?namespace=static-1.60.1_70399-forever-us"
+  },
+  "name": "Mage",
+  "id": 8
+ },
+ "name": "Fire",
+ "media": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/media/playable-specialization/8?namespace=static-1.60.1_70399-forever-us"
+  },
+  "id": 8
+ },
+ "spec_talent_tree": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/talent-tree/1112/playable-specialization/8?namespace=static-1.60.1_70399-forever-us"
+  },
+  "name": "Fire"
+ },
+ "power_type": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/power-type/0?namespace=static-1.60.1_70399-forever-us"
+  },
+  "name": "Mana",
+  "id": 0
+ }
+}

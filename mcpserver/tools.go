@@ -13,8 +13,8 @@ import (
 // ---- Input types (the SDK derives each tool's input schema from these) -----
 
 type characterRef struct {
-	Realm string `json:"realm,omitempty" jsonschema:"Realm name or slug, e.g. 'Area 52'. Defaults to WOW_REALM."`
-	Name  string `json:"name,omitempty" jsonschema:"Character name, exact spelling including accents. Defaults to WOW_CHARACTER."`
+	Realm string `json:"realm,omitempty" jsonschema:"Realm name or slug, e.g. 'Area 52'. Defaults to WOW_REALM. Ignored for WoW: Forever, which has no realms."`
+	Name  string `json:"name,omitempty" jsonschema:"Character name, exact spelling including accents. Defaults to WOW_CHARACTER. For WoW: Forever give first name and surname, e.g. 'Celdis Witdasticc'."`
 }
 
 type characterArgs struct {
@@ -72,7 +72,7 @@ type priceArgs struct {
 
 type apiGetArgs struct {
 	Path      string            `json:"path" jsonschema:"API path beginning with /data/wow/ or /profile/wow/, e.g. /data/wow/playable-specialization/64."`
-	Namespace string            `json:"namespace" jsonschema:"static (patch data), dynamic (auctions, realms, token) or profile (characters)."`
+	Namespace string            `json:"namespace" jsonschema:"static (patch data), dynamic (auctions, realms, token) or profile (characters): each resolves to the configured game's namespace (WOW_GAME). Or a full namespace such as static-forever-us or static-classicann-us, used as-is."`
 	Query     map[string]string `json:"query,omitempty" jsonschema:"Extra query parameters."`
 }
 
@@ -102,47 +102,13 @@ func annotations(title string) *mcp.ToolAnnotations {
 // (the SDK publishes an outputSchema and fills structuredContent); tools that
 // pass Blizzard's JSON through return it as text, since its shape varies.
 func addTools(s *mcp.Server, c *blizzard.Client) {
-	// Character data.
-	mcp.AddTool(s, &mcp.Tool{
-		Name:        "wow_character",
-		Description: "Get a character's profile from the Battle.net API. Sections: " + strings.Join(blizzard.SectionNames(), ", ") + ". Data updates when the character logs out.",
-		Annotations: annotations("Character profile"),
-	}, func(ctx context.Context, _ *mcp.CallToolRequest, a characterArgs) (*mcp.CallToolResult, any, error) {
-		realm, name := defaultCharacter(a.Realm, a.Name)
-		return rawResult(c.Character(ctx, realm, name, a.Section))
-	})
+	game := c.Game
 
-	mcp.AddTool(s, &mcp.Tool{
-		Name:        "wow_character_encounters",
-		Description: "A character's dungeon or raid progress: per instance and difficulty, bosses killed out of total. Without an expansion filter it covers every expansion but omits individual bosses; filter (e.g. 'midnight') for boss kill counts and last-kill dates.",
-		Annotations: annotations("Dungeon and raid progress"),
-	}, func(ctx context.Context, _ *mcp.CallToolRequest, a encounterArgs) (*mcp.CallToolResult, blizzard.EncounterProgress, error) {
-		realm, name := defaultCharacter(a.Realm, a.Name)
-		out, err := c.Encounters(ctx, realm, name, a.Kind, a.Expansion)
-		return nil, out, err
-	})
-
-	mcp.AddTool(s, &mcp.Tool{
-		Name:        "wow_mythic_plus",
-		Description: "A character's Mythic+ season: season name and dates, overall rating, and best runs (dungeon, key level, timed or not, duration, rating, affixes, party). For the current season it also includes this week's best runs. A character with no runs returns an empty list with a note.",
-		Annotations: annotations("Mythic+ season"),
-	}, func(ctx context.Context, _ *mcp.CallToolRequest, a mythicArgs) (*mcp.CallToolResult, blizzard.MythicSeason, error) {
-		realm, name := defaultCharacter(a.Realm, a.Name)
-		out, err := c.MythicKeystoneSeason(ctx, realm, name, a.SeasonID)
-		return nil, out, err
-	})
-
-	mcp.AddTool(s, &mcp.Tool{
-		Name: "wow_profession_recipes",
-		Description: "Compare the recipes a character knows with every recipe in a profession skill tier (defaults to the newest tier they have, e.g. Midnight Tailoring). " +
-			"Returns skill level, known/total counts and the missing recipes grouped by category. " +
-			"Set sources=true to learn where each missing recipe comes from (boss drop, tradable or bind-on-pickup recipe item with AH price, or trainer/specialization); Blizzard's API has no vendor or quest data. Use wow_recipe for a recipe's reagents.",
-		Annotations: annotations("Profession recipes"),
-	}, func(ctx context.Context, _ *mcp.CallToolRequest, a recipeProgressArgs) (*mcp.CallToolResult, blizzard.RecipeProgress, error) {
-		realm, name := defaultCharacter(a.Realm, a.Name)
-		out, err := c.ProfessionRecipes(ctx, realm, name, a.Profession, blizzard.RecipeOptions{TierID: a.SkillTierID, IncludeKnown: a.IncludeKnown, Sources: a.Sources})
-		return nil, out, err
-	})
+	// Character data. Offered only for games whose API serves character
+	// profiles.
+	if game.Supports(blizzard.FeatureCharacters) {
+		addCharacterTools(s, c)
+	}
 
 	// Character creation data.
 	mcp.AddTool(s, &mcp.Tool{
@@ -156,7 +122,7 @@ func addTools(s *mcp.Server, c *blizzard.Client) {
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "wow_classes",
-		Description: "Playable classes and their specializations with role (tank/healer/damage) and primary stat. Give a class name for spec descriptions, hero talent trees, PvP talents, resources and which races can play it. Use wow_talents for a spec's full talent tree.",
+		Description: classesDescription(game),
 		Annotations: annotations("Classes and specializations"),
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, a nameArgs) (*mcp.CallToolResult, ClassList, error) {
 		classes, err := c.Classes(ctx, a.Name)
@@ -165,7 +131,7 @@ func addTools(s *mcp.Server, c *blizzard.Client) {
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "wow_talents",
-		Description: "A specialization's talent tree: class talents, spec talents, its hero talent trees and PvP talents, each with description, cast/cooldown/cost, max rank, choice-node options, prerequisites and point gates. Use section and hero_tree to keep responses small. Tooltip numbers are base values, not scaled to a character.",
+		Description: talentsDescription(game),
 		Annotations: annotations("Talent tree"),
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, a talentArgs) (*mcp.CallToolResult, blizzard.TalentTree, error) {
 		out, err := c.Talents(ctx, a.Class, a.Specialization, a.Section, a.HeroTree)
@@ -206,27 +172,28 @@ func addTools(s *mcp.Server, c *blizzard.Client) {
 		return rawResult(c.Recipe(ctx, a.ID))
 	})
 
-	mcp.AddTool(s, &mcp.Tool{
-		Name:        "wow_commodity_price",
-		Description: "Current region-wide Auction House price for a commodity: cheapest unit price, total quantity listed, and the cheapest price levels. The first call may take a while (the snapshot is large); it is then cached for 30 minutes.",
-		Annotations: annotations("Commodity price"),
-	}, func(ctx context.Context, _ *mcp.CallToolRequest, a priceArgs) (*mcp.CallToolResult, blizzard.CommodityPrice, error) {
-		out, err := c.Commodity(ctx, a.ItemID)
-		return nil, out, err
-	})
+	if game.Supports(blizzard.FeatureCommodities) {
+		mcp.AddTool(s, &mcp.Tool{
+			Name:        "wow_commodity_price",
+			Description: "Current region-wide Auction House price for a commodity: cheapest unit price, total quantity listed, and the cheapest price levels. The first call may take a while (the snapshot is large); it is then cached for 30 minutes.",
+			Annotations: annotations("Commodity price"),
+		}, func(ctx context.Context, _ *mcp.CallToolRequest, a priceArgs) (*mcp.CallToolResult, blizzard.CommodityPrice, error) {
+			out, err := c.Commodity(ctx, a.ItemID)
+			return nil, out, err
+		})
+	}
 
 	mcp.AddTool(s, &mcp.Tool{
-		Name:        "wow_api_get",
-		Description: "Call any read-only WoW Game Data or Profile API endpoint directly, for anything the other tools don't cover (talent trees, mounts, realms, WoW Token price, mythic keystone data, ...).",
+		Name: "wow_api_get",
+		Description: "Call any read-only WoW Game Data or Profile API endpoint directly, for anything the other tools don't cover (mounts, achievements, realms, WoW Token price, ...). " +
+			"Blizzard answers 403 for a namespace it does not recognize and 404 for data it does not have, so a 404 in a game's own namespace can simply mean that endpoint is not populated for it yet.",
 		Annotations: annotations("Raw API request"),
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, a apiGetArgs) (*mcp.CallToolResult, any, error) {
 		if !strings.HasPrefix(a.Path, "/data/wow/") && !strings.HasPrefix(a.Path, "/profile/wow/") {
 			return nil, nil, fmt.Errorf("path must start with /data/wow/ or /profile/wow/")
 		}
-		switch a.Namespace {
-		case blizzard.Static, blizzard.Dynamic, blizzard.Profile:
-		default:
-			return nil, nil, fmt.Errorf("namespace must be static, dynamic or profile")
+		if !blizzard.ValidNamespace(a.Namespace) {
+			return nil, nil, fmt.Errorf("namespace must be static, dynamic, profile or a full namespace such as static-forever-us, got %q", a.Namespace)
 		}
 		q := url.Values{}
 		for k, v := range a.Query {
@@ -234,6 +201,67 @@ func addTools(s *mcp.Server, c *blizzard.Client) {
 		}
 		return rawResult(c.Get(ctx, a.Path, a.Namespace, q))
 	})
+}
+
+// addCharacterTools registers the tools that look up a character by realm and
+// name. They need FeatureCharacters; Mythic+ also needs FeatureMythicPlus.
+func addCharacterTools(s *mcp.Server, c *blizzard.Client) {
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "wow_character",
+		Description: "Get a character's profile from the Battle.net API. Sections: " + strings.Join(blizzard.SectionNames(), ", ") + ". Data updates when the character logs out.",
+		Annotations: annotations("Character profile"),
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, a characterArgs) (*mcp.CallToolResult, any, error) {
+		realm, name := defaultCharacter(c.Game, a.Realm, a.Name)
+		return rawResult(c.Character(ctx, realm, name, a.Section))
+	})
+
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "wow_character_encounters",
+		Description: "A character's dungeon or raid progress: per instance and difficulty, bosses killed out of total. Without an expansion filter it covers every expansion but omits individual bosses; filter (e.g. 'midnight') for boss kill counts and last-kill dates.",
+		Annotations: annotations("Dungeon and raid progress"),
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, a encounterArgs) (*mcp.CallToolResult, blizzard.EncounterProgress, error) {
+		realm, name := defaultCharacter(c.Game, a.Realm, a.Name)
+		out, err := c.Encounters(ctx, realm, name, a.Kind, a.Expansion)
+		return nil, out, err
+	})
+
+	if c.Game.Supports(blizzard.FeatureMythicPlus) {
+		mcp.AddTool(s, &mcp.Tool{
+			Name:        "wow_mythic_plus",
+			Description: "A character's Mythic+ season: season name and dates, overall rating, and best runs (dungeon, key level, timed or not, duration, rating, affixes, party). For the current season it also includes this week's best runs. A character with no runs returns an empty list with a note.",
+			Annotations: annotations("Mythic+ season"),
+		}, func(ctx context.Context, _ *mcp.CallToolRequest, a mythicArgs) (*mcp.CallToolResult, blizzard.MythicSeason, error) {
+			realm, name := defaultCharacter(c.Game, a.Realm, a.Name)
+			out, err := c.MythicKeystoneSeason(ctx, realm, name, a.SeasonID)
+			return nil, out, err
+		})
+	}
+
+	mcp.AddTool(s, &mcp.Tool{
+		Name: "wow_profession_recipes",
+		Description: "Compare the recipes a character knows with every recipe in a profession skill tier (defaults to the newest tier they have, e.g. Midnight Tailoring). " +
+			"Returns skill level, known/total counts and the missing recipes grouped by category. " +
+			"Set sources=true to learn where each missing recipe comes from (boss drop, tradable or bind-on-pickup recipe item with AH price, or trainer/specialization); Blizzard's API has no vendor or quest data. Use wow_recipe for a recipe's reagents.",
+		Annotations: annotations("Profession recipes"),
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, a recipeProgressArgs) (*mcp.CallToolResult, blizzard.RecipeProgress, error) {
+		realm, name := defaultCharacter(c.Game, a.Realm, a.Name)
+		out, err := c.ProfessionRecipes(ctx, realm, name, a.Profession, blizzard.RecipeOptions{TierID: a.SkillTierID, IncludeKnown: a.IncludeKnown, Sources: a.Sources})
+		return nil, out, err
+	})
+}
+
+func classesDescription(g blizzard.Game) string {
+	if g.Supports(blizzard.FeatureTalentExtras) {
+		return "Playable classes and their specializations with role (tank/healer/damage) and primary stat. Give a class name for spec descriptions, hero talent trees, PvP talents, resources and which races can play it. Use wow_talents for a spec's full talent tree."
+	}
+	return "Playable classes and their specializations. This game's API has no role or primary stat data, so judge those from the class and spec names. Give a class name for its resources and which races can play it. Use wow_talents for a spec's talent tree."
+}
+
+func talentsDescription(g blizzard.Game) string {
+	if g.Supports(blizzard.FeatureTalentExtras) {
+		return "A specialization's talent tree: class talents, spec talents, its hero talent trees and PvP talents, each with description, cast/cooldown/cost, max rank, choice-node options, prerequisites and point gates. Use section and hero_tree to keep responses small. Tooltip numbers are base values, not scaled to a character."
+	}
+	return "A specialization's original-style talent tree: every talent with its description, ranks, prerequisites and grid position. This game has one tree per specialization, so there are no class, hero or PvP talents, and section and hero_tree do not apply. Tooltip numbers are base values, not scaled to a character."
 }
 
 // rawResult returns an API response (with link noise removed) as text.

@@ -16,18 +16,21 @@ are in [README.md](README.md).
 | Path | Purpose |
 |---|---|
 | `main.go` | CLI entry point, argument parsing, usage text, `version` (set by `-ldflags` in builds) |
+| `gating.go` | Which CLI commands need which game features; fails before credentials or network |
 | `mcpserver/server.go` | `New` / `Run`: builds the MCP server (official `github.com/modelcontextprotocol/go-sdk`) |
 | `mcpserver/tools.go` | Tool definitions (`wow_*`), input types and structured output types |
 | `mcpserver/resources.go` | `wow://` resources and resource templates |
 | `mcpserver/prompts.go` | Prompts (`new_character`, `character_review`, `profession_plan`) |
 | `mcpserver/describe.go` | `wowapi mcp -list`: lists the server through an in-memory MCP client |
 | `mcpserver/server_test.go` | Protocol-level tests via in-memory transports and a fake API |
-| `blizzard/client.go` | OAuth client-credentials flow, HTTP, response cache |
+| `blizzard/client.go` | OAuth client-credentials flow, HTTP, response cache; resolves namespace kinds for the configured game |
+| `blizzard/game.go` | `Game` (retail, forever): namespace naming, and the table of features each game's API lacks (`Feature`, `Require`) |
 | `blizzard/wow.go` | Endpoint helpers (character, item, search, profession, recipe, commodities), `Slim`, `RealmSlug`, `FormatGold` |
 | `blizzard/progress.go` | Condensed character progress: dungeon/raid encounters, Mythic+ seasons, known vs. missing recipes |
 | `blizzard/sources.go` | Recipe sources: journal loot tables, recipe-item index, realm Auction House index |
 | `blizzard/creation.go` | Character creation data: races, classes, specializations, talent trees |
 | `blizzard/*_test.go` | Tests against an `httptest` fake API — no network or credentials needed |
+| `internal/fixtures/` | Trimmed real WoW: Forever API responses (`forever/`, see its README) served by the fake APIs; unknown namespaces get 403 |
 | `Taskfile.yml` | All common commands ([taskfile.dev](https://taskfile.dev)) |
 | `.goreleaser.yaml` | GoReleaser: builds, bare-binary archives, per-platform MCP bundle hooks, checksums, GitHub release |
 | `npm/build.mjs` | Builds the npm launcher + per-platform packages from GoReleaser's `dist/artifacts.json` |
@@ -124,4 +127,28 @@ Use Task rather than raw `go` commands:
 - Read configuration with `blizzard.Env`, not `os.Getenv`: MCP bundle clients
   can pass unfilled settings through literally (`${user_config.realm}`), and
   `Env` treats those as unset.
+- Games: `WOW_GAME` (retail by default, or `forever`) picks the API namespaces
+  (`static-us` vs `static-forever-us`). What a game's API can't do lives in one
+  table, `games` in `blizzard/game.go`. A new capability that some games lack
+  gets a `Feature`; then check `c.Game.Require`/`Supports` in the `blizzard`
+  method, register the MCP tool/resource/prompt only if supported, and list the
+  CLI command in `commandNeeds` (`gating.go`). A Classic flavor is one more
+  `games` entry (namespaces `classic`, `classic1x`, `classicann` exist).
+- Blizzard answers **403** for a namespace it doesn't recognize and **404** for a
+  recognized namespace without the data (`dynamic-forever-us` and
+  `profile-forever-us` are valid; the first is empty and the second serves only
+  realmless character paths, as of 2026-11-05). Don't read a 404
+  as "wrong namespace". The fake APIs mirror both.
+- Forever characters have no realm: the path is `/profile/wow/character/first-surname`
+  (realm-based paths 404 for every name), built by `Client.characterPath`. The
+  realm argument and `WOW_REALM` are ignored under `WOW_GAME=forever`.
+  `/profile/user/wow` is still out of reach (needs a user OAuth token).
+- Forever data quirks: Skyborne is two races with different names, factions and
+  class lists (don't merge them); specialization records have no role or
+  primary stat (omitted from output); talent trees hold only `spec_talent_nodes`;
+  the journal and PvP-talent indexes are empty; `/profile/user/wow` needs a
+  user OAuth token this tool doesn't have.
+- Fixtures under `internal/fixtures/forever/` are real responses, trimmed (the
+  README there lists how). Refresh them from the live API rather than
+  hand-writing data.
 - In Git Bash, `MSYS_NO_PATHCONV=1` is needed for `wowapi get /data/wow/...`.

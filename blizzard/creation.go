@@ -192,8 +192,8 @@ type Class struct {
 type Specialization struct {
 	ID          int         `json:"id"`
 	Name        string      `json:"name"`
-	Role        string      `json:"role"`
-	PrimaryStat string      `json:"primary_stat"`
+	Role        string      `json:"role,omitempty"`         // Forever's spec records have no role
+	PrimaryStat string      `json:"primary_stat,omitempty"` // or primary stat
 	PowerType   string      `json:"power_type,omitempty"`
 	Description string      `json:"description,omitempty"`
 	HeroTrees   []string    `json:"hero_talent_trees,omitempty"`
@@ -550,10 +550,6 @@ func (c *Client) resolveSpec(ctx context.Context, class, spec string) (apiSpec, 
 // "hero" or "pvp" (empty = all); hero keeps only hero trees whose name
 // contains it.
 func (c *Client) Talents(ctx context.Context, class, spec, section, hero string) (TalentTree, error) {
-	s, err := c.resolveSpec(ctx, class, spec)
-	if err != nil {
-		return TalentTree{}, err
-	}
 	section = strings.ToLower(strings.TrimSpace(section))
 	switch section {
 	case "", "all":
@@ -562,12 +558,25 @@ func (c *Client) Talents(ctx context.Context, class, spec, section, hero string)
 	default:
 		return TalentTree{}, fmt.Errorf("section must be class, spec, hero or pvp, got %q", section)
 	}
+	if section == "class" || section == "hero" || section == "pvp" || hero != "" {
+		if err := c.Game.Require(FeatureTalentExtras); err != nil {
+			return TalentTree{}, err
+		}
+	}
+	s, err := c.resolveSpec(ctx, class, spec)
+	if err != nil {
+		return TalentTree{}, err
+	}
 	out := TalentTree{
 		Class:  s.Class.Name,
 		Spec:   s.Name,
 		SpecID: s.ID,
 		Note: "Talent text uses base values; actual numbers scale with the character's stats. " +
 			"granted_free talents come with the spec. requires_node lists nodes that must be taken first.",
+	}
+	if !c.Game.Supports(FeatureTalentExtras) {
+		out.Note += " This game's trees are original-style: one tree per specialization, with no class, hero or PvP talents. " +
+			"Blizzard's API does not publish how many points each row needs; row and col are display positions."
 	}
 	if section == "" || section == "pvp" {
 		for _, p := range s.PvPTalents {

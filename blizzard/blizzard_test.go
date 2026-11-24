@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+
+	"github.com/glholland/wowapi/internal/fixtures"
 )
 
 func TestRealmSlug(t *testing.T) {
@@ -48,8 +50,13 @@ func TestSlim(t *testing.T) {
 	}
 }
 
-// fakeAPI serves a token endpoint and a few API paths, recording headers.
-func fakeAPI(t *testing.T) (*Client, *int32) {
+// fakeAPI serves a token endpoint and a few API paths for a retail client.
+func fakeAPI(t *testing.T) (*Client, *int32) { return fakeAPIFor(t) }
+
+// fakeAPIFor is fakeAPI for a client built with the given options, e.g.
+// WithGame(Forever). Namespaces Blizzard doesn't recognize get a 403 and the
+// WoW: Forever namespaces are served from internal/fixtures.
+func fakeAPIFor(t *testing.T, opts ...Option) (*Client, *int32) {
 	t.Helper()
 	var tokenCalls int32
 	mux := http.NewServeMux()
@@ -67,6 +74,15 @@ func fakeAPI(t *testing.T) (*Client, *int32) {
 			return
 		}
 		ns := r.Header.Get("Battlenet-Namespace")
+		if !fixtures.Known(ns) {
+			http.Error(w, fixtures.ForbiddenBody, http.StatusForbidden)
+			return
+		}
+		if status, body, ok := fixtures.Respond(ns, r.URL.Path, r.URL.Query()); ok {
+			w.WriteHeader(status)
+			w.Write(body)
+			return
+		}
 		switch {
 		case r.URL.EscapedPath() == "/profile/wow/character/area-52/c%C3%A9ldis/professions" && ns == "profile-us":
 			w.Write([]byte(`{"primaries":[{"profession":{"name":"Tailoring","id":197}}]}`))
@@ -165,7 +181,7 @@ func fakeAPI(t *testing.T) (*Client, *int32) {
 	})
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
-	c := New("id", "secret", "us", "en_US")
+	c := New("id", "secret", "us", "en_US", opts...)
 	c.TokenURL, c.APIBase = srv.URL+"/token", srv.URL
 	return c, &tokenCalls
 }

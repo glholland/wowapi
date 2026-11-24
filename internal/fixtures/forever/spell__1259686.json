@@ -1,0 +1,11 @@
+{
+ "id": 1259686,
+ "name": "Skysight",
+ "description": "Attempt to draw power from a convergence of elements and receive its blessing, increasing your movement and mounted movement speeds by 15% for 30 sec. If an elemental convergence is nearby, you will become Charged for the next 1 hour and the effect of this ability will be increased by 100%.",
+ "media": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/media/spell/1259686?namespace=static-1.60.1_70399-forever-us"
+  },
+  "id": 1259686
+ }
+}

@@ -1,0 +1,11 @@
+{
+ "id": 1259705,
+ "name": "Read Leyline",
+ "description": "Attempt to tap into the power of a nearby leyline, increasing your Health and Mana regeneration by 50% for 15 sec. If a leyline is nearby, you will become Attuned for the next 1 hour and the effect of this ability will be increased by 100%.",
+ "media": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/media/spell/1259705?namespace=static-1.60.1_70399-forever-us"
+  },
+  "id": 1259705
+ }
+}

@@ -24,7 +24,8 @@ var version = "0.5.1" // x-release-please-version
 const usage = `wowapi - World of Warcraft Battle.net API client and MCP server
 
 Usage:
-  wowapi character [-section S] [realm] [name]   character profile (realm/name default to WOW_REALM/WOW_CHARACTER)
+  wowapi character [-section S] [realm] [name]   character profile (realm/name default to WOW_REALM/WOW_CHARACTER;
+                                                  Forever: just "First Surname", no realm)
   wowapi encounters [-kind dungeons|raids] [-expansion E] [realm] [name]
                                                  dungeon or raid boss progress
   wowapi mythic [-season N] [realm] [name]       Mythic+ rating and best runs (default: current season)
@@ -40,8 +41,10 @@ Usage:
   wowapi profession [id [skill-tier-id]]         professions, skill tiers, recipes
   wowapi recipe <id>                             recipe details
   wowapi price <item id>                         Auction House commodity price
-  wowapi get <static|dynamic|profile> <path> [key=value ...]
-                                                 any API endpoint
+  wowapi get <kind|namespace> <path> [key=value ...]
+                                                 any API endpoint; kind is static, dynamic or profile
+                                                 (resolved for WOW_GAME), or a full namespace such as
+                                                 static-forever-us, used as-is
   wowapi mcp [-list [-json]]                     run as an MCP server on stdio (-list: print its tools,
                                                  resources and prompts, then exit; no credentials needed)
   wowapi version
@@ -49,8 +52,14 @@ Usage:
 Flags for data commands:
   -raw    print the unmodified API response (default strips _links/href noise)
 
+WoW: Forever (WOW_GAME=forever) supports races, classes, talents -section spec, search,
+item, profession, recipe and get. Blizzard's API does not serve Forever character
+profiles, Mythic+ or Auction House data yet, so character, encounters, mythic,
+recipes and price report that instead of returning a raw 404.
+
 Environment:
   BLIZZARD_CLIENT_ID, BLIZZARD_CLIENT_SECRET   required (https://develop.battle.net/access/clients)
+  WOW_GAME     retail (default) or forever (World of Warcraft: Forever)
   WOW_REGION   us (default), eu, kr, tw
   WOW_LOCALE   en_US (default)
   WOW_REALM, WOW_CHARACTER   defaults for character lookups
@@ -95,9 +104,18 @@ func run() error {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
+	game, err := blizzard.GameFromEnv()
+	if err != nil {
+		return err
+	}
+	// Commands the game's API can't serve fail here with a clear message, before
+	// any credentials or network are needed.
+	if err := checkCommand(game, cmd, gateFlags{section: *section, hero: *hero, sources: *sources}); err != nil {
+		return err
+	}
 	if cmd == "mcp" && *list {
 		// Listing never calls the API, so it works without credentials.
-		return mcpserver.Describe(ctx, mcpserver.New(blizzard.New("", "", "us", "en_US"), version), os.Stdout, *asJSON)
+		return mcpserver.Describe(ctx, mcpserver.New(blizzard.New("", "", "us", "en_US", blizzard.WithGame(game)), version), os.Stdout, *asJSON)
 	}
 	c, err := blizzard.NewFromEnv()
 	if err != nil {
@@ -132,19 +150,19 @@ func run() error {
 	case "mcp":
 		return mcpserver.Run(ctx, c, version)
 	case "character":
-		realm, name := resolveCharacter(args)
+		realm, name := resolveCharacter(game, args)
 		return print(c.Character(ctx, realm, name, *section))
 	case "encounters":
-		realm, name := resolveCharacter(args)
+		realm, name := resolveCharacter(game, args)
 		return printJSON(c.Encounters(ctx, realm, name, *kind, *expansion))
 	case "mythic":
-		realm, name := resolveCharacter(args)
+		realm, name := resolveCharacter(game, args)
 		return printJSON(c.MythicKeystoneSeason(ctx, realm, name, *season))
 	case "recipes":
 		if len(args) == 0 {
 			return fmt.Errorf("usage: wowapi recipes [-tier N] [-known] [-sources] <profession> [realm] [name]")
 		}
-		realm, name := resolveCharacter(args[1:])
+		realm, name := resolveCharacter(game, args[1:])
 		return printJSON(c.ProfessionRecipes(ctx, realm, name, args[0], blizzard.RecipeOptions{TierID: *tier, IncludeKnown: *known, Sources: *sources}))
 	case "races":
 		return printJSON(c.Races(ctx, strings.Join(args, " ")))
@@ -194,7 +212,10 @@ func run() error {
 		return print(c.Profession(ctx, ids[0], ids[1]))
 	case "get":
 		if len(args) < 2 {
-			return fmt.Errorf("usage: wowapi get <static|dynamic|profile> <path> [key=value ...]")
+			return fmt.Errorf("usage: wowapi get <kind|namespace> <path> [key=value ...]")
+		}
+		if !blizzard.ValidNamespace(args[0]) {
+			return fmt.Errorf("namespace must be static, dynamic, profile or a full namespace such as static-forever-us, got %q", args[0])
 		}
 		if !strings.HasPrefix(args[1], "/data/wow/") && !strings.HasPrefix(args[1], "/profile/wow/") {
 			return fmt.Errorf("path must start with /data/wow/ or /profile/wow/, got %q (in Git Bash, set MSYS_NO_PATHCONV=1 so it isn't rewritten to a Windows path)", args[1])
@@ -216,7 +237,16 @@ func run() error {
 
 // resolveCharacter resolves [realm] [name] arguments, defaulting to WOW_REALM and
 // WOW_CHARACTER. An unquoted multi-word realm is everything but the last arg.
-func resolveCharacter(args []string) (realm, name string) {
+// WoW: Forever has no realms: every argument is part of the "First Surname"
+// name, and WOW_REALM is not used.
+func resolveCharacter(game blizzard.Game, args []string) (realm, name string) {
+	if game == blizzard.Forever {
+		name = blizzard.Env("WOW_CHARACTER")
+		if len(args) > 0 {
+			name = strings.Join(args, " ")
+		}
+		return "", name
+	}
 	realm, name = blizzard.Env("WOW_REALM"), blizzard.Env("WOW_CHARACTER")
 	switch len(args) {
 	case 0:

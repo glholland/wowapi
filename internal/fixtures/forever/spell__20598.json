@@ -1,0 +1,11 @@
+{
+ "id": 20598,
+ "name": "The Human Spirit",
+ "description": "Spirit increased by 10%.",
+ "media": {
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/media/spell/20598?namespace=static-1.60.1_70399-forever-us"
+  },
+  "id": 20598
+ }
+}
